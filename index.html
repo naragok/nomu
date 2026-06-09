@@ -456,7 +456,7 @@
                 </div>
                 <div>
                     <label class="block font-bold text-slate-500 mb-1">대표자명</label>
-                    <input type="text" id="modalRepresentative" placeholder="예: 김대선" class="w-full bg-slate-50 border border-slate-200 rounded p-2.5 focus:ring-1 focus:ring-blue-500 outline-none">
+                    <input type="text" id="modalRepresentative" placeholder="예: 김민지" class="w-full bg-slate-50 border border-slate-200 rounded p-2.5 focus:ring-1 focus:ring-blue-500 outline-none">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -598,7 +598,7 @@
             projects: {
                 "p_1": {
                     company: "(합)유일건설",
-                    representative: "김대선",
+                    representative: "김민지",
                     year: 2026,
                     month: 4,
                     projectName: "원주 캠프통 문화체육공원 조성사업 중 조경·시설물공사(하도급)",
@@ -1767,7 +1767,7 @@
                                 <p class="font-bold text-slate-900 mb-1.5 text-sm">사업주 ("갑")</p>
                                 <p>상 호: ${proj.company}</p>
                                 <p>주 소: 현장 사무소 내</p>
-                                <p class="pt-6 font-bold font-sans">대표자: <span class="underline">${proj.representative || '김대선'}</span> (서명/인)</p>
+                                <p class="pt-6 font-bold font-sans">대표자: <span class="underline">${proj.representative || '김민지'}</span> (서명/인)</p>
                             </div>
                             <div class="space-y-1">
                                 <p class="font-bold text-slate-900 mb-1.5 text-sm">근로자 ("을")</p>
@@ -2447,7 +2447,7 @@
 
         function saveNewProject() {
             const company = document.getElementById('modalCompany').value.trim();
-            const representative = document.getElementById('modalRepresentative').value.trim() || "김대선";
+            const representative = document.getElementById('modalRepresentative').value.trim() || "김민지";
             const year = parseInt(document.getElementById('modalYear').value);
             const month = parseInt(document.getElementById('modalMonth').value);
             const projectName = document.getElementById('modalProjectName').value.trim();
