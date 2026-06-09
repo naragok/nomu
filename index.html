@@ -9,7 +9,7 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght=300;400;500;700;900&display=swap');
         body {
             font-family: 'Noto Sans KR', sans-serif;
             background-color: #f1f5f9;
@@ -128,7 +128,7 @@
                         <input type="text" id="newJob" placeholder="직종 (예: 보통인부)" class="w-full border border-slate-200 rounded p-1.5 focus:ring-1 focus:ring-blue-500 outline-none">
                     </div>
                     <div>
-                        <input type="text" id="newSsn" placeholder="주민/외국인번호 (숫자 13자리)" required class="w-full border border-slate-200 rounded p-1.5 font-mono focus:ring-1 focus:ring-blue-500 outline-none" maxlength="14">
+                        <input type="text" id="newSsn" placeholder="주민등록번호 (숫자 13자리)" required class="w-full border border-slate-200 rounded p-1.5 font-mono focus:ring-1 focus:ring-blue-500 outline-none" maxlength="14">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <input type="text" id="newPhone" placeholder="연락처" class="w-full border border-slate-200 rounded p-1.5 focus:ring-1 focus:ring-blue-500 outline-none" maxlength="13">
@@ -147,7 +147,7 @@
                 </form>
             </div>
 
-            <!-- 2-2. 인쇄 및 양식 옵션 (추가된 실무 기능) -->
+            <!-- 2-2. 인쇄 및 양식 옵션 -->
             <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200">
                 <h2 class="text-xs font-black text-slate-900 mb-2 flex items-center gap-1.5 uppercase tracking-wider">
                     <i data-lucide="settings" class="text-indigo-500 w-4 h-4"></i>
@@ -185,11 +185,11 @@
                 <div class="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10.5px] border-b border-slate-800 pb-2 mb-2">
                     <div class="flex justify-between">
                         <span class="text-slate-400">국민연금</span>
-                        <span class="font-bold text-white">4.5% <span class="text-[9px] text-amber-400">(8일↑)</span></span>
+                        <span class="font-bold text-white">4.5% <span class="text-[9px] text-amber-400">(8일↑, 만60세미만)</span></span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-slate-400">건강보험</span>
-                        <span class="font-bold text-white">3.545% <span class="text-[9px] text-amber-400">(8일↑)</span></span>
+                        <span class="font-bold text-white">3.545% <span class="text-[9px] text-amber-400">(8일↑, 연령무관)</span></span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-slate-400">장기요양</span>
@@ -197,11 +197,11 @@
                     </div>
                     <div class="flex justify-between">
                         <span class="text-slate-400">고용보험</span>
-                        <span class="font-bold text-white">0.9% <span class="text-[9px] text-amber-400">(전체)</span></span>
+                        <span class="font-bold text-white">0.9% <span class="text-[9px] text-amber-400">(전체, 만65세미만)</span></span>
                     </div>
                 </div>
                 <div class="text-[10px] text-slate-400 leading-tight">
-                    💡 <strong>소득세:</strong> 일당 15만원 비과세 공제 후 원천징수세율 2.7%(주민세 0.27%)가 차등 적용됩니다.
+                    💡 <strong>소득세:</strong> 일당 15만원 비과세 공제 후 원천징수세율 2.7%(지방소득세 0.27%)가 차등 적용되며, 일별 세액이 1,000원 미만인 경우 소액부징수 제도로 면제됩니다.
                 </div>
             </div>
 
@@ -259,23 +259,24 @@
         <main class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col print-container h-full">
             
             <!-- 테이블 제어 및 검색 헤더 바 (no-print) -->
-            <div class="p-3 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-2 shrink-0 no-print">
+            <div class="p-3 border-b border-slate-200 bg-slate-50 flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-2 shrink-0 no-print">
                 <div class="flex flex-wrap items-center gap-2">
-                    <h1 class="text-xs font-bold text-slate-800 flex items-center gap-1">
+                    <h1 class="text-xs font-bold text-slate-800 flex items-center gap-1 shrink-0">
                         <i data-lucide="clipboard-list" class="text-blue-600 w-4 h-4"></i>
                         일용노무비 청구지급대장
                     </h1>
                     
-                    <!-- 대장 편집 도구 패널 -->
-                    <div class="flex flex-wrap items-center gap-2 bg-white border border-slate-200 rounded p-1">
-                        <span class="text-[10px] text-slate-400 font-semibold px-1">⚡ 대장 도구:</span>
-                        <button onclick="bulkSetAttendance(1, false)" class="text-[10px] text-blue-600 hover:bg-blue-50 px-1.5 py-0.5 rounded font-bold transition-all">전원출근(전체)</button>
+                    <!-- 대장 편집 도구 패널 (기능 대폭 추가) -->
+                    <div class="flex flex-wrap items-center gap-1.5 bg-white border border-slate-200 rounded p-1">
+                        <span class="text-[10px] text-slate-400 font-semibold px-1">⚡ 실무 도구:</span>
+                        <button onclick="bulkSetAttendance(1, false)" class="text-[10px] text-blue-600 hover:bg-blue-50 px-1.5 py-0.5 rounded font-bold transition-all" title="한 달 전체를 1.0으로 기입합니다.">전원출근(전체)</button>
                         <button onclick="bulkSetAttendance(1, true)" class="text-[10px] text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded font-bold transition-all" title="토/일 주말을 제외하고 평일만 1.0 출역을 일괄 기입합니다.">전원출근(평일만)</button>
+                        <button onclick="bulkAvoidInsurance()" class="text-[10px] text-emerald-600 hover:bg-emerald-50 px-1.5 py-0.5 rounded font-bold transition-all" title="8대사회보험 가입 의무 기준 미만인 7일까지만 무작위 평일 출역을 채워 넣어 공제를 예방합니다.">국민/건강보험 회피 세팅 (7일)</button>
+                        <button onclick="clearWeekendsAttendance()" class="text-[10px] text-rose-600 hover:bg-rose-50 px-1.5 py-0.5 rounded font-bold transition-all" title="입력된 출역 중 토요일과 일요일 출역 기록을 모두 지웁니다.">주말 출역 일괄제거</button>
                         <button onclick="bulkSetAttendance(0, false)" class="text-[10px] text-slate-500 hover:bg-slate-50 px-1.5 py-0.5 rounded font-bold transition-all">출근포맷</button>
                         <button onclick="bulkSetPrice()" class="text-[10px] text-amber-600 hover:bg-amber-50 px-1.5 py-0.5 rounded font-bold transition-all">단가일괄변경</button>
-                        <span class="h-3 border-r border-slate-200"></span>
                         <button onclick="openSpecificDateModal()" class="text-[10px] text-purple-600 hover:bg-purple-50 px-1.5 py-0.5 rounded font-bold flex items-center gap-0.5 transition-all">
-                            <i data-lucide="calendar" class="w-3 h-3"></i> 선택날짜 일괄기입
+                            <i data-lucide="calendar" class="w-3 h-3"></i> 날짜 일괄기입
                         </button>
                         <span class="h-3 border-r border-slate-200"></span>
                         
@@ -287,13 +288,19 @@
                         </label>
                     </div>
                 </div>
-                <!-- 실시간 검색 및 필터 인터페이스 -->
-                <div class="flex items-center gap-2 max-w-xs w-full">
+                <!-- 실시간 검색 및 스마트 공제유형별 필터 -->
+                <div class="flex items-center gap-2 max-w-sm w-full">
+                    <select id="insuranceFilter" onchange="updateHeaderAndTable()" class="text-[10px] bg-white border border-slate-200 rounded px-2 py-1 focus:outline-none font-bold">
+                        <option value="all">공제 유형별 필터 (전체)</option>
+                        <option value="pensionExempt">만 60세 이상 국민연금 면제자</option>
+                        <option value="employmentExempt">만 65세 이상 고용보험 면제자</option>
+                        <option value="insuranceTarget">8일 이상 4대보험 취득 대상자</option>
+                    </select>
                     <div class="relative w-full">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400">
                             <i data-lucide="search" class="w-3.5 h-3.5"></i>
                         </span>
-                        <input type="text" id="searchFilter" oninput="updateHeaderAndTable()" placeholder="검색 (성명, 직종, 비자 등)" class="w-full text-xs bg-white border border-slate-200 rounded pl-7 pr-3 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <input type="text" id="searchFilter" oninput="updateHeaderAndTable()" placeholder="성명, 직종, 주민번호 검색" class="w-full text-xs bg-white border border-slate-200 rounded pl-7 pr-3 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500">
                     </div>
                 </div>
             </div>
@@ -341,7 +348,7 @@
                             <th rowspan="2" class="p-1 border-r border-slate-300 w-16 print:border-black">일수</th>
                             <th rowspan="2" class="p-1 border-r border-slate-300 w-24 print:border-black">단가</th>
                             <th rowspan="2" class="p-1 border-r border-slate-300 w-28 print:border-black">총액</th>
-                            <th colspan="5" class="p-0.5 border-r border-slate-300 print:border-black">공제 금액 내역 (2026년 요율 기준)</th>
+                            <th colspan="5" class="p-0.5 border-r border-slate-300 print:border-black">공제 금액 내역 (2026년 나이/세법 요율 기준)</th>
                             <th rowspan="2" class="p-1 border-r border-slate-300 w-28 print:border-black">지급액<br><span class="text-[9px] font-normal">(실수령액)</span></th>
                             <th rowspan="2" class="p-1 w-52 no-print">필수 서류 발급 / 제어</th>
                         </tr>
@@ -367,7 +374,7 @@
         <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-150">
             <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
                 <h3 class="font-bold flex items-center gap-1.5">
-                    <i data-lucide="user-check" class="w-4 h-4 text-blue-400"></i> 근로자 상세 신상 및 외국인 비자 정보
+                    <i data-lucide="user-check" class="w-4 h-4 text-blue-400"></i> 근로자 상세 신상 정보
                 </h3>
                 <button onclick="closeDetailModal()" class="text-slate-400 hover:text-white transition-all">
                     <i data-lucide="x" class="w-5 h-5"></i>
@@ -387,15 +394,9 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-3">
-                    <div class="col-span-2">
-                        <label class="block font-bold text-slate-500 mb-1 text-[10px]">주민등록번호/외국인번호</label>
-                        <input type="text" id="detailSsn" class="w-full bg-slate-50 border border-slate-200 rounded p-2 font-mono focus:ring-1 focus:ring-blue-500 outline-none" maxlength="14">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-500 mb-1 text-[10px]">비자/국적 (외국인)</label>
-                        <input type="text" id="detailVisa" placeholder="예: F-4, H-2" class="w-full bg-slate-50 border border-slate-200 rounded p-2 focus:ring-1 focus:ring-blue-500 outline-none">
-                    </div>
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1 text-[10px]">주민등록번호 (만 나이 및 보험 공제 자동 적용의 기준이 됩니다)</label>
+                    <input type="text" id="detailSsn" class="w-full bg-slate-50 border border-slate-200 rounded p-2 font-mono focus:ring-1 focus:ring-blue-500 outline-none" maxlength="14">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
@@ -448,10 +449,14 @@
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-            <div class="p-5 space-y-4">
+            <div class="p-5 space-y-3.5">
                 <div>
                     <label class="block font-bold text-slate-500 mb-1">상호(회사명)</label>
                     <input type="text" id="modalCompany" placeholder="예: (합)유일건설" class="w-full bg-slate-50 border border-slate-200 rounded p-2.5 focus:ring-1 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1">대표자명</label>
+                    <input type="text" id="modalRepresentative" placeholder="예: 김대선" class="w-full bg-slate-50 border border-slate-200 rounded p-2.5 focus:ring-1 focus:ring-blue-500 outline-none">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -593,6 +598,7 @@
             projects: {
                 "p_1": {
                     company: "(합)유일건설",
+                    representative: "김대선",
                     year: 2026,
                     month: 4,
                     projectName: "원주 캠프통 문화체육공원 조성사업 중 조경·시설물공사(하도급)",
@@ -602,7 +608,7 @@
                             id: "l_1",
                             name: "홍길동",
                             job: "보통인부",
-                            ssn: "820512-1102345", 
+                            ssn: "820512-1000000", 
                             phone: "010-3333-4444", 
                             bank: "국민은행",
                             account: "110-384-592812",
@@ -621,7 +627,7 @@
                             id: "l_2",
                             name: "김철수",
                             job: "기공(조경)",
-                            ssn: "750403-1254321",
+                            ssn: "750403-1000000",
                             phone: "010-5555-6666",
                             bank: "농협은행",
                             account: "352-1234-5678-91",
@@ -638,16 +644,16 @@
                         },
                         {
                             id: "l_3",
-                            name: "장웨이",
-                            job: "조경공",
-                            ssn: "881023-5143657",
+                            name: "이순구 (고령자)",
+                            job: "보통인부",
+                            ssn: "600215-1000000",
                             phone: "010-7777-8888",
                             bank: "신한은행",
                             account: "110-482-948512",
-                            safetyEdu: false,
+                            safetyEdu: true,
                             address: "서울특별시 서초구 서초대로 45",
                             price: 150000,
-                            visa: "F-4 (재외동포)",
+                            visa: "대한민국",
                             manualDays: null,
                             attendance: {
                                 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 1, 7: 1, 8: 1, 9: 1, 10: 0,
@@ -659,6 +665,50 @@
                 }
             }
         };
+
+        // 주민등록번호를 파싱하여 프로젝트 귀속 시점 기준 만 나이를 연산하는 핵심 함수
+        function getExactInsuranceAge(ssn, projectYear, projectMonth) {
+            if (!ssn) return { age: 30, birthYear: 1996, isPensionExempt: false, isEmploymentExempt: false };
+            const clean = ssn.replace(/[^0-9]/g, '');
+            if (clean.length < 7) return { age: 30, birthYear: 1996, isPensionExempt: false, isEmploymentExempt: false };
+
+            const yyStr = clean.substring(0, 2);
+            const mmStr = clean.substring(2, 4);
+            const gStr = clean.substring(6, 7);
+
+            const yy = parseInt(yyStr, 10);
+            const mm = parseInt(mmStr, 10);
+            const g = parseInt(gStr, 10);
+
+            let birthYear = 1900 + yy;
+            if (g === 3 || g === 4 || g === 7 || g === 8) {
+                birthYear = 2000 + yy;
+            } else if (g === 0 || g === 9) {
+                birthYear = 1800 + yy;
+            } else if (g === 1 || g === 2 || g === 5 || g === 6) {
+                birthYear = 1900 + yy;
+            } else {
+                birthYear = (yy <= 30) ? 2000 + yy : 1900 + yy;
+            }
+
+            // 정확한 월 기준 '만 나이' 산출
+            let exactAge = projectYear - birthYear;
+            if (projectMonth < mm) {
+                exactAge -= 1; // 아직 생일이 안 지난 경우
+            }
+
+            // 만 60세 이상은 국민연금 징수 대상에서 법적 제외
+            const isPensionExempt = exactAge >= 60;
+            // 만 65세 이상은 고용보험(근로자부 실업급여 0.9%) 징수 대상에서 법적 제외
+            const isEmploymentExempt = exactAge >= 65;
+
+            return {
+                age: exactAge,
+                birthYear,
+                isPensionExempt,
+                isEmploymentExempt
+            };
+        }
 
         // 커스텀 알림/컨펌창 헬퍼 함수
         function showCustomConfirm(message, onConfirm, onCancel = null) {
@@ -1013,12 +1063,13 @@
             renderTableBody(proj, daysInMonth);
         }
 
-        // 테이블 목록 동적 렌더링
+        // 테이블 목록 동적 렌더링 (스마트 필터링 및 법정 공제 배지 적용)
         function renderTableBody(proj, daysInMonth) {
             const tbody = document.getElementById('laborList');
             tbody.innerHTML = "";
 
             const searchKeyword = document.getElementById('searchFilter').value.trim().toLowerCase();
+            const insuranceFilterVal = document.getElementById('insuranceFilter').value;
 
             if (!proj.labors || proj.labors.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="46" class="p-8 text-center text-slate-400 font-semibold">등록된 근로자 내역이 없습니다. 좌측 서식에서 등록해 주세요.</td></tr>`;
@@ -1027,16 +1078,37 @@
                 return;
             }
 
-            const filteredLabors = proj.labors.filter(l => {
+            // 1차 텍스트 필터링
+            let targetLabors = proj.labors.filter(l => {
                 const nameMatch = l.name.toLowerCase().includes(searchKeyword);
                 const jobMatch = (l.job || '').toLowerCase().includes(searchKeyword);
                 const ssnMatch = l.ssn.includes(searchKeyword);
-                const visaMatch = (l.visa || '').toLowerCase().includes(searchKeyword);
-                return nameMatch || jobMatch || ssnMatch || visaMatch;
+                return nameMatch || jobMatch || ssnMatch;
             });
 
-            if (filteredLabors.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="46" class="p-8 text-center text-slate-400 font-semibold">검색 조건과 부합하는 근로자가 없습니다.</td></tr>`;
+            // 2차 사회보험 조건별 필터링
+            if (insuranceFilterVal !== "all") {
+                targetLabors = targetLabors.filter(l => {
+                    const { isPensionExempt, isEmploymentExempt } = getExactInsuranceAge(l.ssn, proj.year, proj.month);
+                    let autoDays = 0;
+                    for (let d = 1; d <= 31; d++) {
+                        if (d <= daysInMonth && l.attendance[d]) autoDays += Number(l.attendance[d]);
+                    }
+                    const finalDays = (l.manualDays !== null && l.manualDays !== undefined) ? l.manualDays : autoDays;
+
+                    if (insuranceFilterVal === "pensionExempt") {
+                        return isPensionExempt;
+                    } else if (insuranceFilterVal === "employmentExempt") {
+                        return isEmploymentExempt;
+                    } else if (insuranceFilterVal === "insuranceTarget") {
+                        return finalDays >= 8;
+                    }
+                    return true;
+                });
+            }
+
+            if (targetLabors.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="46" class="p-8 text-center text-slate-400 font-semibold">조건에 맞는 근로자가 대장에 존재하지 않습니다.</td></tr>`;
                 updateDashboardStats(0, 0, 0, 0);
                 renderTotalRow([], daysInMonth);
                 return;
@@ -1045,7 +1117,7 @@
             const computedRowsData = [];
             const pad = getPaddingClass();
 
-            filteredLabors.forEach((labor, idx) => {
+            targetLabors.forEach((labor, idx) => {
                 let autoDays = 0;
                 for (let d = 1; d <= 31; d++) {
                     if (d <= daysInMonth && labor.attendance[d]) {
@@ -1060,12 +1132,13 @@
                 tr.className = "hover:bg-slate-50 border-b border-slate-200 text-center text-slate-700 print:text-black print:border-black";
 
                 const hasManualDays = (labor.manualDays !== null && labor.manualDays !== undefined);
+                const { age, isPensionExempt, isEmploymentExempt } = getExactInsuranceAge(labor.ssn, proj.year, proj.month);
 
                 let html = `
                     <td class="${pad} border-r border-slate-200 bg-slate-100 font-bold sticky left-0 z-10 print:bg-white print:border-black">${idx + 1}</td>
                     <td class="${pad} border-r border-slate-200 font-black text-blue-600 cursor-pointer sticky left-[40px] bg-slate-50 hover:underline z-10 print:bg-white print:text-black print:border-black" onclick="openDetailModal('${labor.id}')">
-                        ${labor.name}
-                        ${labor.visa && labor.visa !== '대한민국' ? `<span class="block text-[8px] text-amber-600 font-normal">${labor.visa}</span>` : ''}
+                        <span class="block">${labor.name}</span>
+                        <span class="block text-[8px] text-slate-400 font-normal">만 ${age}세</span>
                     </td>
                     <td class="${pad} border-r border-slate-200 font-mono text-[10px] tracking-wider print:border-black">${labor.ssn}</td>
                     <td class="${pad} border-r border-slate-200 text-slate-600 print:border-black">${labor.job || '보통인부'}</td>
@@ -1096,6 +1169,11 @@
                     }
                 }
 
+                // 법적 면제 안내 배지 처리
+                const pensionBadge = isPensionExempt ? `<span class="block text-[8px] text-rose-500 font-bold scale-90">연금면제</span>` : '';
+                const employBadge = isEmploymentExempt ? `<span class="block text-[8px] text-orange-500 font-bold scale-90">고용면제</span>` : '';
+                const incomeTaxBadge = (calc.incomeTax === 0 && labor.price > 150000) ? `<span class="block text-[7px] text-blue-500 scale-75">소액부징수</span>` : '';
+
                 html += `
                     <td class="p-0 border-r border-slate-200 bg-amber-50/50 print:border-black print:bg-white">
                         <input type="number" step="0.1" value="${calc.effectiveDays}" 
@@ -1116,13 +1194,20 @@
                     <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600">
                         <span class="block font-semibold">${commaFormatter(calc.incomeTax)}</span>
                         <span class="text-[8px] text-slate-400 block">${commaFormatter(calc.localTax)}</span>
+                        ${incomeTaxBadge}
                     </td>
-                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600">${commaFormatter(calc.employment)}</td>
+                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600">
+                        <span class="block">${commaFormatter(calc.employment)}</span>
+                        ${employBadge}
+                    </td>
                     <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600">
                         <span class="block font-semibold">${commaFormatter(calc.health)}</span>
                         <span class="text-[8px] text-slate-400 block">${commaFormatter(calc.care)}</span>
                     </td>
-                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600">${commaFormatter(calc.pension)}</td>
+                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600">
+                        <span class="block">${commaFormatter(calc.pension)}</span>
+                        ${pensionBadge}
+                    </td>
                     
                     <td class="${pad} border-r border-slate-200 text-right font-bold text-red-600 font-mono print:border-black print:text-black">${commaFormatter(calc.totalDeduction)}</td>
                     <td class="${pad} border-r border-slate-200 text-right font-black text-blue-700 bg-blue-50/20 font-mono print:border-black print:text-black">${commaFormatter(calc.netPay)}</td>
@@ -1168,7 +1253,6 @@
             document.getElementById('detailName').value = labor.name || "";
             document.getElementById('detailJob').value = labor.job || "";
             document.getElementById('detailSsn').value = labor.ssn || "";
-            document.getElementById('detailVisa').value = labor.visa || "대한민국";
             document.getElementById('detailPhone').value = labor.phone || "";
             document.getElementById('detailBank').value = labor.bank || "";
             document.getElementById('detailAccount').value = labor.account || "";
@@ -1194,14 +1278,13 @@
             const ssn = document.getElementById('detailSsn').value.trim();
 
             if (!name || ssn.replace(/[^0-9]/g, '').length !== 13) {
-                showCustomAlert("성명 기입 및 13자리 주민/외국인번호를 정확히 기입해주세요.");
+                showCustomAlert("성명 기입 및 13자리 주민번호를 정확히 기입해주세요.");
                 return;
             }
 
             labor.name = name;
             labor.job = document.getElementById('detailJob').value.trim();
             labor.ssn = ssn;
-            labor.visa = document.getElementById('detailVisa').value.trim() || "대한민국";
             labor.phone = document.getElementById('detailPhone').value.trim();
             labor.bank = document.getElementById('detailBank').value.trim();
             labor.account = document.getElementById('detailAccount').value.trim();
@@ -1232,7 +1315,7 @@
             const labor = proj.labors.find(l => l.id === laborId);
             if (!labor) return;
 
-            // 랜덤 주민번호 뒷자리 생성으로 오류 방지
+            // 주민번호 기반 자리수 준수로 오류 방지
             const dummySsnFirst = labor.ssn.slice(0, 6);
             const dummySsnSecond = String(Math.floor(Math.random() * 2) + 1) + "000000";
             const mockSsn = `${dummySsnFirst}-${dummySsnSecond}`;
@@ -1251,7 +1334,7 @@
             showToast(`[${labor.name}] 근로자 설정이 복제 등록되었습니다.`);
         }
 
-        // [실무 기능] 엑셀 붙여넣기용 클립보드 초고속 복사 (Tab-Separated-Values 양식)
+        // [실무 기능] 엑셀 붙여넣기용 클립보드 복사 (Tab-Separated-Values)
         function copyToClipboardForExcel() {
             const proj = appState.projects[appState.currentProjectId];
             if (!proj || !proj.labors || proj.labors.length === 0) {
@@ -1378,7 +1461,7 @@
             }, 10);
         }
 
-        // 스프레드시트 방식의 방향키 및 엔터 네비게이션 제어 (완벽 디버깅 버전)
+        // 스프레드시트 방식의 방향키 및 엔터 네비게이션 제어
         function setupKeyboardNavigation() {
             document.addEventListener('keydown', function(e) {
                 const target = e.target;
@@ -1390,7 +1473,6 @@
                 if (!proj) return;
                 const daysInMonth = new Date(proj.year, proj.month, 0).getDate();
 
-                // 화면에 현재 실제 렌더링되어 표시 중인 모든 input들을 수집하여 상/하 내비게이션 어긋남 버그 해결
                 const visibleInputs = Array.from(document.querySelectorAll('.attendance-cell-input'));
                 const currentIndex = visibleInputs.indexOf(target);
                 if (currentIndex === -1) return;
@@ -1401,7 +1483,6 @@
                     e.preventDefault();
                     let nextDay = dayIdx + 1;
                     if (nextDay > daysInMonth) {
-                        // 다음 행의 1일로 이동
                         const nextRowFirstInput = visibleInputs.find(input => {
                             return input.getAttribute('data-day-index') === "1" && 
                                    visibleInputs.indexOf(input) > currentIndex;
@@ -1417,12 +1498,11 @@
                     e.preventDefault();
                     let prevDay = dayIdx - 1;
                     if (prevDay < 1) {
-                        // 이전 행의 마지막 일로 이동
                         const prevRowLastInput = visibleInputs.reverse().find(input => {
                             return parseInt(input.getAttribute('data-day-index')) === daysInMonth && 
                                    visibleInputs.indexOf(input) < currentIndex;
                         });
-                        visibleInputs.reverse(); // 수집 배열 원상복구
+                        visibleInputs.reverse(); 
                         if (prevRowLastInput) targetInput = prevRowLastInput;
                     } else {
                         targetInput = visibleInputs.find(input => {
@@ -1432,14 +1512,12 @@
                     }
                 } else if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    // 물리적으로 바로 밑에 렌더링된 동일 날짜의 인풋 검색
                     targetInput = visibleInputs.find(input => {
                         return input.getAttribute('data-day-index') === String(dayIdx) && 
                                visibleInputs.indexOf(input) > currentIndex;
                     });
                 } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
-                    // 물리적으로 바로 위에 렌더링된 동일 날짜의 인풋 검색 (뒤에서부터 추적)
                     const tempArr = [...visibleInputs].reverse();
                     const revCurrentIndex = tempArr.indexOf(target);
                     targetInput = tempArr.find(input => {
@@ -1552,7 +1630,7 @@
             }
 
             html += `
-                <td class="${pad} border-r border-slate-300 font-black text-slate-900 print:border-black">${sumDays}</td>
+                <td class="${pad} border-r border-slate-300 font-black text-slate-900 print:border-black">${sumDays.toFixed(1)}</td>
                 <td class="${pad} border-r border-slate-300 font-bold print:border-black">-</td>
                 <td class="${pad} border-r border-slate-300 text-right font-black text-slate-900 font-mono print:border-black">${commaFormatter(sumWages)}</td>
                 
@@ -1575,7 +1653,7 @@
             footer.innerHTML = html;
         }
 
-        // 첫 출역일 및 마지막 출역일 추출 헬퍼 (예외 방어 코드 고도화)
+        // 첫 출역일 및 마지막 출역일 추출 헬퍼
         function getFirstAndLastAttendance(labor) {
             let firstDay = null;
             for (let d = 1; d <= 31; d++) {
@@ -1602,9 +1680,10 @@
             const labor = proj.labors.find(l => l.id === laborId);
             if (!labor) return;
 
-            const { firstDay, lastDay } = getFirstAndLastAttendance(labor);
+            const { firstDay } = getFirstAndLastAttendance(labor);
+            const daysInMonth = new Date(proj.year, proj.month, 0).getDate();
             const startDate = `${proj.year}년 ${proj.month}월 ${firstDay}일`;
-            const endDate = `${proj.year}년 ${proj.month}월 ${lastDay}일`;
+            const endDate = `${proj.year}년 ${proj.month}월 ${daysInMonth}일`;
 
             const printWindow = window.open("", "_blank");
             if (!printWindow) {
@@ -1620,7 +1699,7 @@
                     <title>표준일용근로계약서 - ${labor.name}</title>
                     <script src="https://cdn.tailwindcss.com"><\/script>
                     <style>
-                        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+                        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght=300;400;500;700;900&display=swap');
                         body { font-family: 'Noto Sans KR', sans-serif; }
                         @media print {
                             body { background: white; color: black; }
@@ -1655,8 +1734,7 @@
                                 <h3 class="font-extrabold text-blue-800 mb-1">■ 근로자 ("을")</h3>
                                 <div><span class="text-slate-400">성 명:</span> ${labor.name}</div>
                                 <div><span class="text-slate-400">직 종:</span> ${labor.job || '보통인부'}</div>
-                                <div><span class="text-slate-400">등록번호:</span> ${labor.ssn}</div>
-                                <div><span class="text-slate-400">국적/비자:</span> ${labor.visa || '대한민국'}</div>
+                                <div><span class="text-slate-400">주민등록번호:</span> ${labor.ssn}</div>
                             </div>
                         </div>
 
@@ -1689,13 +1767,13 @@
                                 <p class="font-bold text-slate-900 mb-1.5 text-sm">사업주 ("갑")</p>
                                 <p>상 호: ${proj.company}</p>
                                 <p>주 소: 현장 사무소 내</p>
-                                <p class="pt-6 font-bold font-sans">대표자명: ________________________ (서명/인)</p>
+                                <p class="pt-6 font-bold font-sans">대표자: <span class="underline">${proj.representative || '김대선'}</span> (서명/인)</p>
                             </div>
                             <div class="space-y-1">
                                 <p class="font-bold text-slate-900 mb-1.5 text-sm">근로자 ("을")</p>
                                 <p>성 명: ${labor.name}</p>
                                 <p>주 소: ${labor.address || '현장 인근 또는 등록된 주소지'}</p>
-                                <p class="pt-6 font-bold font-sans">근로자명: ________________________ (서명/인)</p>
+                                <p class="pt-6 font-bold font-sans">근로자: <span class="underline">${labor.name}</span> (서명/인)</p>
                             </div>
                         </div>
                     </div>
@@ -1731,7 +1809,7 @@
                     <title>임금지급명세서 - ${labor.name}</title>
                     <script src="https://cdn.tailwindcss.com"><\/script>
                     <style>
-                        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+                        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght=300;400;500;700;900&display=swap');
                         body { font-family: 'Noto Sans KR', sans-serif; }
                         @media print {
                             body { background: white; color: black; }
@@ -1757,8 +1835,7 @@
                                 <p class="font-bold text-blue-800 mb-1">■ 근로자 인적사항</p>
                                 <p>• <strong>성 명:</strong> ${labor.name}</p>
                                 <p>• <strong>직 종:</strong> ${labor.job || '보통인부'}</p>
-                                <p>• <strong>등록번호:</strong> ${labor.ssn}</p>
-                                <p>• <strong>국적/비자:</strong> ${labor.visa || '대한민국'}</p>
+                                <p>• <strong>주민등록번호:</strong> ${labor.ssn}</p>
                             </div>
                             <div>
                                 <p class="font-bold text-blue-800 mb-1">■ 사업장 현황</p>
@@ -1844,7 +1921,7 @@
                     <title>신규채용자 안전교육 이수증 - ${labor.name}</title>
                     <script src="https://cdn.tailwindcss.com"><\/script>
                     <style>
-                        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+                        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght=300;400;500;700;900&display=swap');
                         body { font-family: 'Noto Sans KR', sans-serif; }
                         @media print {
                             body { background: white; color: black; }
@@ -1908,7 +1985,7 @@
                             <thead>
                                 <tr class="bg-slate-100 font-bold">
                                     <th class="border border-slate-400 p-2">근로자명</th>
-                                    <th class="border border-slate-400 p-2">생년월일(등록번호)</th>
+                                    <th class="border border-slate-400 p-2">생년월일(주민번호)</th>
                                     <th class="border border-slate-400 p-2">직종</th>
                                     <th class="border border-slate-400 p-2">교육이수 자필 확인란</th>
                                 </tr>
@@ -2014,7 +2091,7 @@
             });
         }
 
-        // 일괄 전원 출근 기입기 (토/일요일 주말 제외 옵션 추가 고도화)
+        // 일괄 전원 출근 기입기
         function bulkSetAttendance(val, excludeWeekends) {
             const proj = appState.projects[appState.currentProjectId];
             if (!proj || !proj.labors || proj.labors.length === 0) {
@@ -2026,15 +2103,18 @@
             let msg = "";
             if (val === 1) {
                 msg = excludeWeekends 
-                    ? "현재 필터링된 모든 근로자의 출역 기록을 [토/일요일 주말을 제외]하고 평일만 1.0(만출)으로 변경하시겠습니까?" 
-                    : "현재 필터링된 모든 근로자의 출역 기록을 전체 1.0(만출)으로 변경하시겠습니까?";
+                    ? "현재 표시된 모든 근로자의 출역 기록을 [토/일요일 주말을 제외]하고 평일만 1.0(만출)으로 변경하시겠습니까?" 
+                    : "현재 표시된 모든 근로자의 출역 기록을 전체 1.0(만출)으로 변경하시겠습니까?";
             } else {
                 msg = "모든 근로자의 출역 기록을 0으로 비우시겠습니까?";
             }
 
             showCustomConfirm(msg, () => {
                 const searchKeyword = document.getElementById('searchFilter').value.trim().toLowerCase();
+                const insuranceFilterVal = document.getElementById('insuranceFilter').value;
+
                 proj.labors.forEach(l => {
+                    // 필터에 해당하는 근로자만 선별적으로 변경 적용
                     const nameMatch = l.name.toLowerCase().includes(searchKeyword);
                     const jobMatch = (l.job || '').toLowerCase().includes(searchKeyword);
                     if (nameMatch || jobMatch) {
@@ -2042,11 +2122,10 @@
                         for (let d = 1; d <= 31; d++) {
                             if (d <= daysInMonth) {
                                 if (val === 1 && excludeWeekends) {
-                                    // 주말 여부 판단 (0: 일요일, 6: 토요일)
                                     const date = new Date(proj.year, proj.month - 1, d);
                                     const dayOfWeek = date.getDay();
                                     if (dayOfWeek === 0 || dayOfWeek === 6) {
-                                        l.attendance[d] = 0; // 주말은 출근 제외
+                                        l.attendance[d] = 0; 
                                     } else {
                                         l.attendance[d] = 1;
                                     }
@@ -2061,7 +2140,78 @@
                 });
                 saveToLocalStorage();
                 updateHeaderAndTable();
-                showToast("전체 출역정보가 조건에 맞게 일괄 기입되었습니다.");
+                showToast("출역 정보가 조건에 맞게 일괄 기입되었습니다.");
+            });
+        }
+
+        // [신규 실무 도구] 4대보험 가입 회피용 평일 무작위 7일 채워넣기 기능
+        function bulkAvoidInsurance() {
+            const proj = appState.projects[appState.currentProjectId];
+            if (!proj || !proj.labors || proj.labors.length === 0) {
+                showCustomAlert("처리할 근로자 데이터가 없습니다.");
+                return;
+            }
+
+            const daysInMonth = new Date(proj.year, proj.month, 0).getDate();
+            showCustomConfirm("현재 테이블에 표시되어 있는 근로자들의 이번 달 근무일수를 국민연금/건강보험 가입 대상 아래(평일 무작위 7일 만출)로 신속 조율하시겠습니까?", () => {
+                const searchKeyword = document.getElementById('searchFilter').value.trim().toLowerCase();
+
+                proj.labors.forEach(l => {
+                    const nameMatch = l.name.toLowerCase().includes(searchKeyword);
+                    if (nameMatch) {
+                        l.manualDays = null;
+                        // 기존 출역 초기화
+                        for (let d = 1; d <= 31; d++) l.attendance[d] = 0;
+
+                        // 평일 일자 수집
+                        let weekDays = [];
+                        for (let d = 1; d <= daysInMonth; d++) {
+                            const date = new Date(proj.year, proj.month - 1, d);
+                            const dayOfWeek = date.getDay();
+                            if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                                weekDays.push(d);
+                            }
+                        }
+
+                        // 무작위로 7일 골라 출근 세팅
+                        let shuffled = weekDays.sort(() => 0.5 - Math.random());
+                        let selectedDays = shuffled.slice(0, 7);
+
+                        selectedDays.forEach(d => {
+                            l.attendance[d] = 1;
+                        });
+                    }
+                });
+
+                saveToLocalStorage();
+                updateHeaderAndTable();
+                showToast("대상 근로자의 평일 출역이 7일 이하로 최적 세팅 완료되었습니다.");
+            });
+        }
+
+        // [신규 실무 도구] 기입된 토/일 주말 출역만 일괄 클린 제거
+        function clearWeekendsAttendance() {
+            const proj = appState.projects[appState.currentProjectId];
+            if (!proj || !proj.labors || proj.labors.length === 0) {
+                showCustomAlert("처리할 대장 정보가 없습니다.");
+                return;
+            }
+
+            const daysInMonth = new Date(proj.year, proj.month, 0).getDate();
+            showCustomConfirm("기입 완료되어 있는 전체 근로자의 출역 내역 중에서 토요일 및 일요일(주말) 출역 데이터만 일괄 제거하시겠습니까?", () => {
+                proj.labors.forEach(l => {
+                    l.manualDays = null;
+                    for (let d = 1; d <= daysInMonth; d++) {
+                        const date = new Date(proj.year, proj.month - 1, d);
+                        const dayOfWeek = date.getDay();
+                        if (dayOfWeek === 0 || dayOfWeek === 6) {
+                            l.attendance[d] = 0; // 주말 출근 초기화
+                        }
+                    }
+                });
+                saveToLocalStorage();
+                updateHeaderAndTable();
+                showToast("대장 내 주말 출역 데이터가 일괄 삭제되었습니다.");
             });
         }
 
@@ -2224,11 +2374,15 @@
             showToast(`${namesArray.length}명의 근로자가 대장에 추가되었습니다.`);
         }
 
-        // 2026 사회보험료 및 원천공제 세액 계산기
+        // 2026 사회보험료 및 원천공제 세액 계산기 (나이 및 일별 소액부징수 기준 고도화 적용)
         function calculateDeductions(labor, daysCount) {
+            const proj = appState.projects[appState.currentProjectId];
             const effectiveDays = (labor.manualDays !== null && labor.manualDays !== undefined) ? labor.manualDays : daysCount;
             const totalWages = Math.floor(labor.price * effectiveDays);
             
+            // 귀속 연도 및 귀속월 기준 정확한 '만 나이' 기반 세제 혜택 판정
+            const { isPensionExempt, isEmploymentExempt } = getExactInsuranceAge(labor.ssn, proj.year, proj.month);
+
             let pension = 0;
             let health = 0;
             let care = 0;
@@ -2237,25 +2391,30 @@
             let localTax = 0;
 
             if (totalWages > 0) {
-                // 고용보험 (0.9%) 전체 적용
-                employment = Math.floor(totalWages * 0.009);
+                // 고용보험 (실업급여): 근로자부 요율 0.9% 전체 적용 (법적 고용보험 만65세 이상 취득자는 실업급여부 면제)
+                if (!isEmploymentExempt) {
+                    employment = Math.floor(totalWages * 0.009);
+                }
 
-                // 국민, 건강, 장기요양 (월 8일 이상 근로 시 취득)
+                // 국민, 건강, 장기요양 (월 8일 이상 근로 시 정규 취득 대상이 됨)
                 if (effectiveDays >= 8) {
-                    pension = Math.floor(totalWages * 0.045);
+                    // 국민연금: 근로자 요율 4.5% 적용 (법적 국민연금 만60세 이상은 납부 예외)
+                    if (!isPensionExempt) {
+                        pension = Math.floor(totalWages * 0.045);
+                    }
                     health = Math.floor(totalWages * 0.03545);
                     care = Math.floor(health * 0.1295);
                 }
 
-                // 2026 일용직 소득세 비과세 기준 (1일 150,000원 공제 후 세율 2.7% 적용, 원천징수감면 45% 감면 적용)
+                // 2026 일용직 소득세 일별 소액부징수 법령 정밀 준수
+                // (일당 - 15만원 비과세 공제 후 원천세율 2.7% 적용 시, 일별 소득세액이 1,000원 미만이면 전액 0원 징수 제외)
                 if (labor.price > 150000) {
-                    const dailyCalculatedTax = Math.floor((labor.price - 150000) * 0.027 * 0.55);
-                    const dailyTaxSum = Math.floor(dailyCalculatedTax * effectiveDays);
+                    const dailyCalculatedTax = Math.floor((labor.price - 150000) * 0.027);
                     
-                    // 원천징수 소액부징수 (소득세 기준 1,000원 이상일 때만 공제)
-                    if (dailyTaxSum >= 1000) {
-                        incomeTax = dailyTaxSum;
-                        localTax = Math.floor(incomeTax * 0.1);
+                    if (dailyCalculatedTax >= 1000) {
+                        const dailyLocalTax = Math.floor(dailyCalculatedTax * 0.1);
+                        incomeTax = dailyCalculatedTax * effectiveDays;
+                        localTax = dailyLocalTax * effectiveDays;
                     }
                 }
             }
@@ -2288,6 +2447,7 @@
 
         function saveNewProject() {
             const company = document.getElementById('modalCompany').value.trim();
+            const representative = document.getElementById('modalRepresentative').value.trim() || "김대선";
             const year = parseInt(document.getElementById('modalYear').value);
             const month = parseInt(document.getElementById('modalMonth').value);
             const projectName = document.getElementById('modalProjectName').value.trim();
@@ -2301,6 +2461,7 @@
             const newId = "p_" + Date.now();
             appState.projects[newId] = {
                 company,
+                representative,
                 year,
                 month,
                 projectName,
@@ -2316,6 +2477,7 @@
             showToast("신규 현장 대장이 성공적으로 구축 및 선택되었습니다.");
 
             document.getElementById('modalCompany').value = "";
+            document.getElementById('modalRepresentative').value = "";
             document.getElementById('modalProjectName').value = "";
             document.getElementById('modalWorkType').value = "";
         }
@@ -2330,7 +2492,7 @@
 
             let csv = "\uFEFF"; 
             csv += `상호명,${proj.company},지급귀속,${proj.year}년 ${proj.month}월,공종분류,${proj.workType}\n\n`;
-            csv += "NO,성명,주민번호,비자(국적),연락처,직종,은행명,계좌번호,";
+            csv += "NO,성명,주민번호,연락처,직종,은행명,계좌번호,";
             for (let d = 1; d <= 31; d++) {
                 csv += `${d}일,`;
             }
@@ -2347,7 +2509,7 @@
 
                 const calc = calculateDeductions(l, autoDays);
 
-                csv += `${idx + 1},${l.name},'${l.ssn},${l.visa || '대한민국'},'${l.phone || ''},${l.job || '보통인부'},${l.bank || ''},'${l.account || ''},${attStr}${calc.effectiveDays},${l.price},${calc.totalWages},${calc.incomeTax},${calc.localTax},${calc.employment},${calc.health},${calc.care},${calc.pension},${calc.totalDeduction},${calc.netPay}\n`;
+                csv += `${idx + 1},${l.name},'${l.ssn},'${l.phone || ''},${l.job || '보통인부'},${l.bank || ''},'${l.account || ''},${attStr}${calc.effectiveDays},${l.price},${calc.totalWages},${calc.incomeTax},${calc.localTax},${calc.employment},${calc.health},${calc.care},${calc.pension},${calc.totalDeduction},${calc.netPay}\n`;
             });
 
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
