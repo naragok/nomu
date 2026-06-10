@@ -100,9 +100,14 @@
                         <i data-lucide="building-2" class="text-blue-500 w-4 h-4"></i>
                         현장 대장 선택
                     </h2>
-                    <button onclick="openNewProjectModal()" class="text-[10px] bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold px-2 py-0.5 rounded transition-all">
-                        + 신규 등록
-                    </button>
+                    <div class="flex gap-1">
+                        <button onclick="openNewProjectModal()" class="text-[10px] bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold px-2 py-0.5 rounded transition-all">
+                            + 신규 등록
+                        </button>
+                        <button onclick="openEditProjectModal()" class="text-[10px] bg-amber-50 text-amber-600 hover:bg-amber-100 font-bold px-2 py-0.5 rounded transition-all">
+                            ✏️ 수정
+                        </button>
+                    </div>
                 </div>
                 <div class="space-y-1.5">
                     <select id="selectCompany" onchange="onCompanyOrPeriodChange()" class="w-full bg-slate-50 border border-slate-200 rounded p-1.5 font-bold focus:ring-1 focus:ring-blue-500 outline-none"></select>
@@ -480,6 +485,52 @@
             <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2 text-xs">
                 <button onclick="closeNewProjectModal()" class="px-4 py-2 font-medium text-slate-500 hover:text-slate-800">취소</button>
                 <button onclick="saveNewProject()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded shadow-sm">등록 및 이동</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 팝업 모달 2-2: 현장 대장 수정 (no-print) -->
+    <div id="editProjectModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center z-50 no-print">
+        <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden">
+            <div class="bg-amber-700 text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold flex items-center gap-1.5">
+                    <i data-lucide="pencil" class="w-4 h-4"></i> 현장 대장 정보 수정
+                </h3>
+                <button onclick="closeEditProjectModal()" class="text-amber-200 hover:text-white transition-all">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-3.5">
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1">상호(회사명)</label>
+                    <input type="text" id="editModalCompany" placeholder="예: (합)유일건설" class="w-full bg-slate-50 border border-slate-200 rounded p-2.5 focus:ring-1 focus:ring-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1">대표자명</label>
+                    <input type="text" id="editModalRepresentative" placeholder="예: 김민지" class="w-full bg-slate-50 border border-slate-200 rounded p-2.5 focus:ring-1 focus:ring-amber-500 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">연도 (4자리)</label>
+                        <input type="number" id="editModalYear" class="w-full bg-slate-50 border border-slate-200 rounded p-2.5 focus:ring-1 focus:ring-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">월 (1~12)</label>
+                        <input type="number" id="editModalMonth" min="1" max="12" class="w-full bg-slate-50 border border-slate-200 rounded p-2.5 focus:ring-1 focus:ring-amber-500 outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1">공사명 (전체)</label>
+                    <input type="text" id="editModalProjectName" class="w-full bg-slate-50 border border-slate-200 rounded p-2.5 focus:ring-1 focus:ring-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1">구체적 공종명</label>
+                    <input type="text" id="editModalWorkType" class="w-full bg-slate-50 border border-slate-200 rounded p-2.5 focus:ring-1 focus:ring-amber-500 outline-none">
+                </div>
+            </div>
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2 text-xs">
+                <button onclick="closeEditProjectModal()" class="px-4 py-2 font-medium text-slate-500 hover:text-slate-800">취소</button>
+                <button onclick="saveEditedProject()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded shadow-sm">수정 저장</button>
             </div>
         </div>
     </div>
@@ -1221,6 +1272,9 @@
                         </button>
                         <button onclick="printSafetyInNewTab('${labor.id}')" class="text-purple-600 hover:text-white hover:bg-purple-600 border border-purple-500 rounded px-1 py-0.5 font-bold text-[9.5px] transition-all" title="안전보건교육 일지">
                             일지
+                        </button>
+                        <button onclick="printRosterInNewTab('${labor.id}')" class="text-rose-600 hover:text-white hover:bg-rose-600 border border-rose-500 rounded px-1 py-0.5 font-bold text-[9.5px] transition-all" title="필수서류 명단 양식 발급">
+                            명단
                         </button>
                         <button onclick="duplicateLabor('${labor.id}')" class="text-amber-600 hover:text-white hover:bg-amber-600 border border-amber-500 rounded px-1 py-0.5 font-bold text-[9.5px] transition-all" title="이 근로자 정보 복제하기">
                             복사
@@ -2434,6 +2488,343 @@
                 totalDeduction,
                 netPay
             };
+        }
+
+        // 현장 대장 수정 모달 열기/닫기
+        function openEditProjectModal() {
+            const proj = appState.projects[appState.currentProjectId];
+            if (!proj) {
+                showCustomAlert("수정할 현장 대장이 선택되어 있지 않습니다.");
+                return;
+            }
+            document.getElementById('editModalCompany').value = proj.company || "";
+            document.getElementById('editModalRepresentative').value = proj.representative || "";
+            document.getElementById('editModalYear').value = proj.year || new Date().getFullYear();
+            document.getElementById('editModalMonth').value = proj.month || 1;
+            document.getElementById('editModalProjectName').value = proj.projectName || "";
+            document.getElementById('editModalWorkType').value = proj.workType || "";
+            document.getElementById('editProjectModal').classList.remove('hidden');
+        }
+
+        function closeEditProjectModal() {
+            document.getElementById('editProjectModal').classList.add('hidden');
+        }
+
+        function saveEditedProject() {
+            const proj = appState.projects[appState.currentProjectId];
+            if (!proj) return;
+
+            const company = document.getElementById('editModalCompany').value.trim();
+            const representative = document.getElementById('editModalRepresentative').value.trim();
+            const year = parseInt(document.getElementById('editModalYear').value);
+            const month = parseInt(document.getElementById('editModalMonth').value);
+            const projectName = document.getElementById('editModalProjectName').value.trim();
+            const workType = document.getElementById('editModalWorkType').value.trim();
+
+            if (!company || isNaN(year) || isNaN(month) || !projectName || !workType) {
+                showCustomAlert("비어 있는 입력 항목이 있는지 상세 확인 후 기록하여 주십시오.");
+                return;
+            }
+
+            proj.company = company;
+            proj.representative = representative || proj.representative;
+            proj.year = year;
+            proj.month = month;
+            proj.projectName = projectName;
+            proj.workType = workType;
+
+            saveToLocalStorage();
+            populateDropdowns();
+            onProjectChange();
+            closeEditProjectModal();
+            showToast("현장 대장 정보가 수정되었습니다.");
+        }
+
+        // 4. 필수서류 명단 양식 출력 (명단.pdf 양식 정확히 재현 + 사진 첨부)
+        function printRosterInNewTab(laborId) {
+            const proj = appState.projects[appState.currentProjectId];
+            const labor = proj.labors.find(l => l.id === laborId);
+            if (!labor) return;
+
+            const printWindow = window.open("", "_blank");
+            if (!printWindow) {
+                showCustomAlert("팝업 차단이 설정되어 있습니다. 팝업 허용 후 다시 시도해 주세요.");
+                return;
+            }
+
+            printWindow.document.write(`<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>필수서류 명단 - ${labor.name}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght=300;400;500;700;900&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+            font-size: 12px;
+        }
+
+        /* 상단 조작 바 (화면 전용) */
+        .top-bar {
+            background: #1e293b; color: white;
+            padding: 10px 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .top-bar span { font-size: 11px; }
+        .btn-print {
+            background: #dc2626; color: white; border: none;
+            padding: 6px 16px; border-radius: 4px;
+            font-weight: bold; cursor: pointer; font-family: inherit; font-size: 12px;
+        }
+        .btn-print:hover { background: #b91c1c; }
+
+        /* 화면: 스크롤 가능한 문서 래퍼 */
+        .screen-wrap { padding: 24px; display: flex; justify-content: center; }
+
+        /* A4 문서 카드 (화면) */
+        .doc-card {
+            width: 210mm;
+            background: white;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+            border-radius: 4px;
+            padding: 14mm 12mm 14mm 12mm;
+        }
+
+        /* 인적사항 테이블 */
+        .info-table { width: 100%; border-collapse: collapse; }
+        .info-table th, .info-table td {
+            border: 1px solid #374151;
+            padding: 6px 8px;
+            text-align: center;
+            font-size: 11px;
+        }
+        .info-table th { background: #f3f4f6; font-weight: 700; letter-spacing: 0.08em; }
+        .info-table td.addr { text-align: left; font-size: 10px; }
+
+        /* 서류 섹션 */
+        .doc-section { border: 1px solid #374151; border-top: none; }
+        .doc-section-title {
+            background: #f3f4f6;
+            padding: 7px 0;
+            text-align: center;
+            font-weight: 700;
+            letter-spacing: 0.35em;
+            font-size: 12px;
+            border-bottom: 1px solid #374151;
+        }
+        /* 각 섹션 본문: 사진이 꽉 차게 */
+        .doc-section-body {
+            padding: 10px;
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        /* 사진 슬롯: 섹션 높이에 맞게 flex로 늘어남 */
+        .photo-slot {
+            flex: 1;
+            min-height: 190px;
+            border: 2px dashed #9ca3af;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            background: #fafafa;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .photo-slot:hover { border-color: #3b82f6; background: #eff6ff; }
+        .photo-slot input[type=file] {
+            position: absolute; inset: 0; opacity: 0;
+            cursor: pointer; width: 100%; height: 100%;
+        }
+        .photo-slot img {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            object-fit: contain;
+        }
+        .photo-slot .slot-label {
+            font-size: 10px; color: #6b7280; font-weight: 600;
+            text-align: center; z-index: 1; pointer-events: none;
+        }
+        .photo-slot .slot-icon { font-size: 30px; z-index: 1; pointer-events: none; }
+        .photo-slot .remove-btn {
+            position: absolute; top: 5px; right: 5px;
+            background: rgba(239,68,68,0.9); color: white;
+            border: none; border-radius: 50%;
+            width: 22px; height: 22px;
+            font-size: 12px; cursor: pointer;
+            display: none; align-items: center; justify-content: center;
+            font-weight: bold; z-index: 20; line-height: 1;
+        }
+        .photo-slot.has-image .remove-btn { display: flex; }
+        .photo-slot.has-image .slot-label,
+        .photo-slot.has-image .slot-icon { display: none; }
+
+        /* ── 인쇄 전용 ── */
+        @media print {
+            html, body { background: white !important; }
+            .top-bar { display: none !important; }
+            .screen-wrap { padding: 0 !important; display: block; }
+
+            /* A4 꽉채움: 여백·크기 완전 제어 */
+            @page {
+                size: A4 portrait;
+                margin: 10mm 10mm 10mm 10mm;
+            }
+
+            .doc-card {
+                width: 100%;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                padding: 0 !important;
+                /* 인쇄 영역을 꽉 채우기 위해 높이를 페이지에 맞춤 */
+                height: calc(297mm - 20mm);
+                display: flex;
+                flex-direction: column;
+            }
+
+            /* 3개 섹션이 나머지 높이를 균등 배분 */
+            .info-table { flex-shrink: 0; }
+            .doc-section { flex: 1; display: flex; flex-direction: column; }
+            .doc-section-title { flex-shrink: 0; }
+            .doc-section-body { flex: 1; }
+
+            .photo-slot {
+                border: 1px solid #9ca3af !important;
+                min-height: unset;
+            }
+            .photo-slot .remove-btn { display: none !important; }
+            .photo-slot input[type=file] { display: none !important; }
+            /* 사진 없는 슬롯: 안내 텍스트 숨김 */
+            .photo-slot:not(.has-image) .slot-icon,
+            .photo-slot:not(.has-image) .slot-label { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <span>📋 필수서류 명단 — ${labor.name} | ${proj.company} ${proj.year}년 ${proj.month}월</span>
+        <button class="btn-print" onclick="window.print()">🖨️ 인쇄하기</button>
+    </div>
+
+    <div class="screen-wrap">
+    <div class="doc-card">
+
+        <!-- 인적사항 테이블 -->
+        <table class="info-table">
+            <thead>
+                <tr>
+                    <th style="width:68px">직 종</th>
+                    <th style="width:64px">성 명</th>
+                    <th style="width:128px">주민번호</th>
+                    <th style="width:116px">전화번호</th>
+                    <th>주 소</th>
+                    <th style="width:56px">비 고</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>${labor.job || '보통인부'}</td>
+                    <td style="font-weight:700">${labor.name}</td>
+                    <td style="font-family:monospace;font-size:11px">${labor.ssn || ''}</td>
+                    <td style="font-family:monospace">${labor.phone || ''}</td>
+                    <td class="addr">${labor.address || ''}</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- 주민등록증 (앞면 1장) -->
+        <div class="doc-section">
+            <div class="doc-section-title">주 민 등 록 증</div>
+            <div class="doc-section-body">
+                <div class="photo-slot" id="slot-id-front" onclick="triggerUpload('slot-id-front')">
+                    <span class="slot-icon">🪪</span>
+                    <span class="slot-label">앞면 사진 추가<br><small style="font-weight:400;color:#9ca3af">클릭하여 업로드</small></span>
+                    <input type="file" accept="image/*" onchange="loadPhoto(this,'slot-id-front','img-id-front')" onclick="event.stopPropagation()">
+                    <img id="img-id-front" style="display:none">
+                    <button class="remove-btn" onclick="removePhoto(event,'slot-id-front','img-id-front')">✕</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 통장 사본 -->
+        <div class="doc-section">
+            <div class="doc-section-title">통 장 사 본</div>
+            <div class="doc-section-body">
+                <div class="photo-slot" id="slot-bank" onclick="triggerUpload('slot-bank')">
+                    <span class="slot-icon">🏦</span>
+                    <span class="slot-label">통장 사본 사진 추가<br><small style="font-weight:400;color:#9ca3af">클릭하여 업로드</small></span>
+                    <input type="file" accept="image/*" onchange="loadPhoto(this,'slot-bank','img-bank')" onclick="event.stopPropagation()">
+                    <img id="img-bank" style="display:none">
+                    <button class="remove-btn" onclick="removePhoto(event,'slot-bank','img-bank')">✕</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 기초안전보건교육 이수증 -->
+        <div class="doc-section">
+            <div class="doc-section-title">기초안전보건교육 이수증</div>
+            <div class="doc-section-body">
+                <div class="photo-slot" id="slot-safety" onclick="triggerUpload('slot-safety')">
+                    <span class="slot-icon">🦺</span>
+                    <span class="slot-label">이수증 사진 추가<br><small style="font-weight:400;color:#9ca3af">클릭하여 업로드</small></span>
+                    <input type="file" accept="image/*" onchange="loadPhoto(this,'slot-safety','img-safety')" onclick="event.stopPropagation()">
+                    <img id="img-safety" style="display:none">
+                    <button class="remove-btn" onclick="removePhoto(event,'slot-safety','img-safety')">✕</button>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /doc-card -->
+    </div><!-- /screen-wrap -->
+
+    <script>
+        function triggerUpload(slotId) {
+            const slot = document.getElementById(slotId);
+            if (!slot) return;
+            slot.querySelector('input[type=file]').click();
+        }
+        function loadPhoto(input, slotId, imgId) {
+            const file = input.files[0];
+            if (!file) return;
+            const slot = document.getElementById(slotId);
+            const img = document.getElementById(imgId);
+            if (!img) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                img.src = e.target.result;
+                img.style.display = 'block';
+                slot.classList.add('has-image');
+            };
+            reader.readAsDataURL(file);
+        }
+        function removePhoto(event, slotId, imgId) {
+            event.stopPropagation();
+            const slot = document.getElementById(slotId);
+            const img = document.getElementById(imgId);
+            if (img) { img.src = ''; img.style.display = 'none'; }
+            if (slot) {
+                slot.classList.remove('has-image');
+                const inp = slot.querySelector('input[type=file]');
+                if (inp) inp.value = '';
+            }
+        }
+    <\/script>
+</body>
+</html>`);
+            printWindow.document.close();
         }
 
         // 신규 현장 개설 모달 열기/닫기
