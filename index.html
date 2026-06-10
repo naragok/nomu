@@ -121,8 +121,8 @@
                     </div>
                 </div>
                 <div class="space-y-1.5">
-                    <select id="selectCompany" onchange="onCompanyOrPeriodChange()" class="w-full bg-slate-50 border border-slate-200 rounded p-1.5 font-bold focus:ring-1 focus:ring-blue-500 outline-none"></select>
-                    <select id="selectPeriod" onchange="onCompanyOrPeriodChange()" class="w-full bg-slate-50 border border-slate-200 rounded p-1.5 font-bold focus:ring-1 focus:ring-blue-500 outline-none"></select>
+                    <select id="selectCompany" onchange="onCompanyOrPeriodChange('company')" class="w-full bg-slate-50 border border-slate-200 rounded p-1.5 font-bold focus:ring-1 focus:ring-blue-500 outline-none"></select>
+                    <select id="selectPeriod" onchange="onCompanyOrPeriodChange('period')" class="w-full bg-slate-50 border border-slate-200 rounded p-1.5 font-bold focus:ring-1 focus:ring-blue-500 outline-none"></select>
                     <select id="selectProject" onchange="onProjectChange()" class="w-full bg-slate-50 border border-slate-200 rounded p-1.5 font-bold focus:ring-1 focus:ring-blue-500 outline-none"></select>
                 </div>
             </div>
@@ -303,13 +303,6 @@
                             <i data-lucide="hand" class="w-3 h-3"></i> 드래그 범위 기입
                         </button>
                         <span class="h-3 border-r border-slate-200"></span>
-                        
-                        <!-- 마우스 클릭 퀵모드 토글 스위치 -->
-                        <label class="flex items-center gap-1 cursor-pointer select-none px-1 text-[10px]" title="입력창을 클릭할 때마다 1.0 -> 0.5 -> 0 순서로 기입됩니다.">
-                            <input type="checkbox" id="quickClickToggle" class="sr-only peer">
-                            <div class="w-7 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600 relative font-sans"></div>
-                            <span class="font-bold text-slate-600 peer-checked:text-indigo-600">마우스 퀵 클릭모드</span>
-                        </label>
                     </div>
                 </div>
                 <!-- 실시간 검색 및 스마트 공제유형별 필터 -->
@@ -486,9 +479,15 @@
                     </div>
                 </div>
             </div>
-            <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2 text-xs">
-                <button onclick="closeDetailModal()" class="px-4 py-2 font-medium text-slate-500 hover:text-slate-800">닫기</button>
-                <button onclick="saveDetailInfo()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded shadow-sm">변동사항 저장</button>
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center gap-2 text-xs">
+                <button onclick="openSpecificDateModalForLabor(document.getElementById('detailLaborId').value)"
+                    class="flex items-center gap-1.5 px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold rounded border border-purple-200 transition-all">
+                    <i data-lucide="calendar-check" class="w-3.5 h-3.5"></i> 날짜 일괄 기입
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="closeDetailModal()" class="px-4 py-2 font-medium text-slate-500 hover:text-slate-800">닫기</button>
+                    <button onclick="saveDetailInfo()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded shadow-sm">변동사항 저장</button>
+                </div>
             </div>
         </div>
     </div>
@@ -587,8 +586,8 @@
 
     <!-- 팝업 모달 3: 선택날짜 일괄 지정 (no-print) -->
     <div id="specificDateModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center z-50 no-print">
-        <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-sm overflow-hidden">
-            <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
+        <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh]">
+            <div class="bg-slate-900 text-white p-4 flex justify-between items-center shrink-0">
                 <h3 class="font-bold flex items-center gap-1.5 text-xs uppercase tracking-wider">
                     <i data-lucide="calendar" class="w-4 h-4 text-purple-400"></i> 특정 날짜 출역 일괄 조율기
                 </h3>
@@ -596,25 +595,64 @@
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-            <div class="p-5 space-y-4">
+            <div class="p-5 space-y-4 overflow-y-auto">
+
+                <!-- ① 근로자 선택 -->
                 <div>
-                    <label class="block font-bold text-slate-500 mb-1">일괄 적용할 날짜 선택</label>
-                    <select id="modalTargetDay" class="w-full bg-slate-50 border border-slate-200 rounded p-2 font-bold font-mono focus:ring-1 focus:ring-blue-500 outline-none"></select>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block font-bold text-slate-500 text-xs">적용 대상 근로자 <span id="selectedLaborCount" class="text-purple-600"></span></label>
+                        <div class="flex gap-2 text-[10px]">
+                            <button onclick="selectAllLabors()" class="text-indigo-600 hover:underline font-bold">전체선택</button>
+                            <span class="text-slate-300">|</span>
+                            <button onclick="deselectAllLabors()" class="text-slate-400 hover:underline font-bold">전체해제</button>
+                        </div>
+                    </div>
+                    <!-- 근로자 검색 -->
+                    <div class="relative mb-2">
+                        <input type="text" id="laborSearchInModal" placeholder="이름 또는 직종으로 검색..."
+                            oninput="filterLaborListInModal()"
+                            class="w-full bg-slate-50 border border-slate-200 rounded p-2 pr-8 text-xs font-bold focus:ring-1 focus:ring-purple-400 outline-none placeholder:font-normal placeholder:text-slate-400">
+                        <span class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]">🔍</span>
+                    </div>
+                    <!-- 근로자 체크박스 목록 -->
+                    <div id="laborCheckboxList" class="border border-slate-200 rounded overflow-y-auto max-h-36 divide-y divide-slate-100 text-xs">
+                        <!-- JS로 동적 생성 -->
+                    </div>
                 </div>
+
+                <hr class="border-slate-100">
+
+                <!-- ② 날짜 선택 -->
                 <div>
-                    <label class="block font-bold text-slate-500 mb-1">설정할 출역 값</label>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block font-bold text-slate-500 text-xs">일괄 적용할 날짜 <span id="selectedDayCount" class="text-purple-600"></span></label>
+                        <div class="flex gap-2 text-[10px]">
+                            <button onclick="selectAllDays()" class="text-indigo-600 hover:underline font-bold">전체선택</button>
+                            <span class="text-slate-300">|</span>
+                            <button onclick="deselectAllDays()" class="text-slate-400 hover:underline font-bold">전체해제</button>
+                            <span class="text-slate-300">|</span>
+                            <button onclick="selectWeekdays()" class="text-emerald-600 hover:underline font-bold">평일만</button>
+                            <span class="text-slate-300">|</span>
+                            <button onclick="selectWeekends()" class="text-rose-500 hover:underline font-bold">주말만</button>
+                        </div>
+                    </div>
+                    <div id="dayCheckboxGrid" class="grid grid-cols-7 gap-1 text-[11px] font-bold select-none">
+                        <!-- JS로 동적 생성 -->
+                    </div>
+                </div>
+
+                <!-- ③ 출역 값 -->
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1 text-xs">설정할 출역 값</label>
                     <select id="modalTargetValue" class="w-full bg-slate-50 border border-slate-200 rounded p-2 font-bold focus:ring-1 focus:ring-blue-500 outline-none">
                         <option value="1">1.0 (하루 만출)</option>
                         <option value="0.5">0.5 (반일 근무)</option>
                         <option value="0">0.0 (출근 없음 / 취소)</option>
                     </select>
                 </div>
-                <div class="bg-amber-50 border border-amber-200 rounded p-2.5 text-[10.5px] text-amber-800 leading-snug flex items-start gap-1.5 font-sans">
-                    <i data-lucide="info" class="w-4 h-4 shrink-0 text-amber-600"></i>
-                    <span>현재 검색창에 필터링되어 활성화되어 있는 모든 근로자에게만 타겟 적용됩니다. (전체 적용 시 검색창 비우기 권장)</span>
-                </div>
+
             </div>
-            <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2 text-xs">
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2 text-xs shrink-0">
                 <button onclick="closeSpecificDateModal()" class="px-4 py-2 font-medium text-slate-500 hover:text-slate-800">닫기</button>
                 <button onclick="saveSpecificDateAttendance()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2 rounded shadow-sm">일괄 기입 적용</button>
             </div>
@@ -1036,9 +1074,12 @@
 
         // 주민등록번호를 파싱하여 프로젝트 귀속 시점 기준 만 나이를 연산하는 핵심 함수
         // 동일 인자에 대한 반복 호출 비용 절감을 위해 메모이제이션 적용
+        // [수정] 나이 계산 시 월(month)뿐만 아니라 일(day)까지 비교하여 정확한 만 나이 산출
         const _insuranceAgeCache = new Map();
-        function getExactInsuranceAge(ssn, projectYear, projectMonth) {
-            const cacheKey = `${ssn}|${projectYear}|${projectMonth}`;
+        function getExactInsuranceAge(ssn, projectYear, projectMonth, projectDay) {
+            // projectDay 미전달 시 해당 월의 1일 기준으로 보수적 계산 (면제 혜택 불이익 방지)
+            const refDay = projectDay || 1;
+            const cacheKey = `${ssn}|${projectYear}|${projectMonth}|${refDay}`;
             if (_insuranceAgeCache.has(cacheKey)) return _insuranceAgeCache.get(cacheKey);
             if (!ssn) return { age: 30, birthYear: 1996, isPensionExempt: false, isEmploymentExempt: false };
             const clean = ssn.replace(/[^0-9]/g, '');
@@ -1046,11 +1087,13 @@
 
             const yyStr = clean.substring(0, 2);
             const mmStr = clean.substring(2, 4);
-            const gStr = clean.substring(6, 7);
+            const ddStr = clean.substring(4, 6); // [수정] 생일 '일(day)' 파싱 추가
+            const gStr  = clean.substring(6, 7);
 
             const yy = parseInt(yyStr, 10);
             const mm = parseInt(mmStr, 10);
-            const g = parseInt(gStr, 10);
+            const dd = parseInt(ddStr, 10); // [수정] 생일 '일' 변수 추가
+            const g  = parseInt(gStr,  10);
 
             let birthYear = 1900 + yy;
             if (g === 3 || g === 4 || g === 7 || g === 8) {
@@ -1063,10 +1106,13 @@
                 birthYear = (yy <= 30) ? 2000 + yy : 1900 + yy;
             }
 
-            // 정확한 월 기준 '만 나이' 산출
+            // [수정] 연·월·일 모두 비교하여 정확한 만 나이 산출
+            // 예: 생일 4월 15일, 기준일 4월 10일 → 아직 생일 미도래 → 1살 차감
             let exactAge = projectYear - birthYear;
             if (projectMonth < mm) {
-                exactAge -= 1; // 아직 생일이 안 지난 경우
+                exactAge -= 1; // 기준월이 생월보다 이전 → 생일 미도래
+            } else if (projectMonth === mm && refDay < dd) {
+                exactAge -= 1; // 같은 달이지만 기준일이 생일 이전 → 생일 미도래
             }
 
             // 만 60세 이상은 국민연금 징수 대상에서 법적 제외
@@ -1219,6 +1265,18 @@
         };
 
         function initApp() {
+            // [수정] 구버전 localStorage 키 정리 — v1~v3 잔여 데이터 자동 삭제하여 스토리지 낭비 방지
+            const LEGACY_KEYS = [
+                'labor_payment_system_data_v1',
+                'labor_payment_system_data_v2',
+                'labor_payment_system_data_v3'
+            ];
+            LEGACY_KEYS.forEach(key => {
+                if (localStorage.getItem(key) !== null) {
+                    localStorage.removeItem(key);
+                }
+            });
+
             const saved = localStorage.getItem('labor_payment_system_data_v4');
             if (saved) {
                 try {
@@ -1311,10 +1369,10 @@
         // 상단 드롭다운 채우기
         function populateDropdowns() {
             const selectCompany = document.getElementById('selectCompany');
-            const selectPeriod = document.getElementById('selectPeriod');
+            const selectPeriod  = document.getElementById('selectPeriod');
 
             selectCompany.innerHTML = "";
-            selectPeriod.innerHTML = "";
+            selectPeriod.innerHTML  = "";
 
             if (!appState.projects || Object.keys(appState.projects).length === 0) {
                 appState = demoData;
@@ -1329,49 +1387,79 @@
                 selectCompany.appendChild(opt);
             });
 
-            const uniquePeriods = [...new Set(Object.values(appState.projects).map(p => `${p.year}년 ${p.month}월`))];
-            uniquePeriods.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p;
-                opt.innerText = p;
-                selectPeriod.appendChild(opt);
-            });
-
+            // 현재 활성 프로젝트에 맞춰 회사 선택값 먼저 설정
             const activeProj = appState.projects[appState.currentProjectId];
             if (activeProj) {
                 selectCompany.value = activeProj.company;
-                selectPeriod.value = `${activeProj.year}년 ${activeProj.month}월`;
             } else {
                 const firstProjId = Object.keys(appState.projects)[0];
                 appState.currentProjectId = firstProjId;
                 const firstProj = appState.projects[firstProjId];
-                if (firstProj) {
-                    selectCompany.value = firstProj.company;
-                    selectPeriod.value = `${firstProj.year}년 ${firstProj.month}월`;
-                }
+                if (firstProj) selectCompany.value = firstProj.company;
+            }
+
+            // [수정] 기간 드롭다운을 선택된 회사에 해당하는 기간만 표시하도록 필터링
+            _rebuildPeriodDropdown(selectCompany.value);
+
+            if (activeProj) {
+                selectPeriod.value = `${activeProj.year}년 ${activeProj.month}월`;
             }
 
             filterProjectsDropdown();
         }
 
+        // [추가] 회사 선택 변경 시 기간 드롭다운을 해당 회사 기간으로 재구성
+        function _rebuildPeriodDropdown(selectedCompany) {
+            const selectPeriod = document.getElementById('selectPeriod');
+            selectPeriod.innerHTML = "";
+            const periodsForCompany = [...new Set(
+                Object.values(appState.projects)
+                    .filter(p => p.company === selectedCompany)
+                    .map(p => `${p.year}년 ${p.month}월`)
+            )];
+            if (periodsForCompany.length === 0) {
+                // 선택된 회사에 기간이 없으면 전체 기간 표시 (방어 로직)
+                [...new Set(Object.values(appState.projects).map(p => `${p.year}년 ${p.month}월`))].forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p; opt.innerText = p;
+                    selectPeriod.appendChild(opt);
+                });
+            } else {
+                periodsForCompany.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p; opt.innerText = p;
+                    selectPeriod.appendChild(opt);
+                });
+            }
+        }
+
         // 회사명 및 귀속월에 맞춰 프로젝트 목록 필터링
+        // [수정] 매칭 없을 때 전체 현장을 무조건 표시하던 fallback 제거
+        // 회사·기간 조합에 해당하는 프로젝트만 표시하며, 없을 경우 빈 안내 항목을 표시
         function filterProjectsDropdown() {
             const selectCompany = document.getElementById('selectCompany');
-            const selectPeriod = document.getElementById('selectPeriod');
+            const selectPeriod  = document.getElementById('selectPeriod');
             const selectProject = document.getElementById('selectProject');
 
             const selectedCompany = selectCompany.value;
-            const selectedPeriod = selectPeriod.value;
+            const selectedPeriod  = selectPeriod.value;
 
             selectProject.innerHTML = "";
 
-            let matchingProjects = Object.entries(appState.projects).filter(([id, p]) => {
+            const matchingProjects = Object.entries(appState.projects).filter(([id, p]) => {
                 const pPeriod = `${p.year}년 ${p.month}월`;
                 return p.company === selectedCompany && pPeriod === selectedPeriod;
             });
 
             if (matchingProjects.length === 0) {
-                matchingProjects = Object.entries(appState.projects);
+                // 일치하는 프로젝트 없음 — 전체 노출 대신 안내 항목만 표시
+                const opt = document.createElement('option');
+                opt.value = "";
+                opt.innerText = "해당 조건의 현장이 없습니다";
+                opt.disabled = true;
+                selectProject.appendChild(opt);
+                selectProject.value = "";
+                return;
             }
 
             matchingProjects.forEach(([id, p]) => {
@@ -1381,7 +1469,7 @@
                 selectProject.appendChild(opt);
             });
 
-            if (appState.projects[appState.currentProjectId] && 
+            if (appState.projects[appState.currentProjectId] &&
                 matchingProjects.some(([id]) => id === appState.currentProjectId)) {
                 selectProject.value = appState.currentProjectId;
             } else if (selectProject.options.length > 0) {
@@ -1391,7 +1479,12 @@
         }
 
         // 회사 혹은 기간 변경 시 하위 콤보박스 및 데이터 리로드 연동
-        function onCompanyOrPeriodChange() {
+        // [수정] 회사 변경 시 해당 회사의 기간만 기간 드롭다운에 표시되도록 재구성
+        function onCompanyOrPeriodChange(changedField) {
+            if (changedField === 'company') {
+                const selectedCompany = document.getElementById('selectCompany').value;
+                _rebuildPeriodDropdown(selectedCompany);
+            }
             filterProjectsDropdown();
             onProjectChange();
         }
@@ -1567,7 +1660,6 @@
                             <td class="border-r border-slate-200 p-0 print:border-black ${colorClass}">
                                 <input type="text" value="${val ? val : ''}" 
                                     onchange="toggleAttendance('${labor.id}', ${d}, this.value)" 
-                                    onclick="handleAttendanceClick(event, '${labor.id}', ${d})"
                                     data-labor-id="${labor.id}"
                                     data-day-index="${d}"
                                     title="${labor.name} - ${d}일 출역"
@@ -1697,6 +1789,20 @@
             document.getElementById('laborDetailModal').classList.add('hidden');
         }
 
+        // 신상정보 모달에서 날짜 일괄 기입으로 연동
+        // — 해당 근로자 1명만 선택된 상태로 날짜 일괄 변경 모달을 열어줌
+        function openSpecificDateModalForLabor(laborId) {
+            if (!laborId) return;
+            closeDetailModal();                 // 신상정보 모달 닫기
+            openSpecificDateModal();            // 날짜 일괄 변경 모달 열기 (전체 근로자 렌더됨)
+
+            // 전체 체크박스를 해제하고 해당 근로자만 선택
+            document.querySelectorAll('#laborCheckboxList .labor-check').forEach(cb => {
+                cb.checked = (cb.dataset.laborId === laborId);
+            });
+            _updateSelectedLaborCount();
+        }
+
         function saveDetailInfo() {
             const proj = appState.projects[appState.currentProjectId];
             if (!proj) return;
@@ -1766,7 +1872,8 @@
             proj.labors.push(duplicated);
             saveToLocalStorage();
             updateHeaderAndTable();
-            showToast(`[${labor.name}] 근로자 설정이 복제 등록되었습니다.`);
+            // [수정] 복제된 주민번호는 임시값임을 명확히 안내
+            showToast(`[${labor.name}] 근로자 설정이 복제 등록되었습니다. ⚠️ 주민번호가 임시값으로 생성되었습니다 — 이름을 클릭하여 반드시 수정해 주세요.`);
         }
 
         // [실무 기능] 엑셀 붙여넣기용 클립보드 복사 (Tab-Separated-Values)
@@ -1813,14 +1920,30 @@
         }
 
         // [실무 기능] 데이터 전체 영구 포맷
+        // [수정] 포맷 전 현재 데이터를 자동 백업 파일로 다운로드 후 초기화
         function resetAllDatabase() {
             showCustomConfirm("경고! 현재 시스템에 등록된 모든 현장, 프로젝트 대장 및 근로자 데이터가 완전히 포맷되며 복구 불가능합니다. 초기화하시겠습니까?", () => {
+                // 포맷 전 자동 백업 다운로드
+                try {
+                    const dataStr = JSON.stringify(appState, null, 2);
+                    const blob = new Blob([dataStr], { type: 'application/json' });
+                    const url  = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.setAttribute("download", `노무관리_포맷전_자동백업_${new Date().toISOString().slice(0, 10)}.json`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                } catch (e) {
+                    // 백업 실패해도 포맷은 계속 진행
+                }
                 localStorage.removeItem('labor_payment_system_data_v4');
                 appState = JSON.parse(JSON.stringify(demoData));
                 saveToLocalStorage();
                 populateDropdowns();
                 onProjectChange();
-                showToast("전체 데이터베이스가 완벽히 포맷되었습니다.");
+                showToast("전체 데이터베이스가 완벽히 포맷되었습니다. 포맷 전 백업 파일이 자동 다운로드되었습니다.");
             });
         }
 
@@ -1951,39 +2074,6 @@
 
             renderTotalRow(computedRowsData, daysInMonth);
             calculateAndDisplaySummary(computedRowsData);
-        }
-
-        // 마우스 원클릭 퀵모드 전환 지원
-        function handleAttendanceClick(event, laborId, day) {
-            const isQuickMode = document.getElementById('quickClickToggle').checked;
-            if (!isQuickMode) return; 
-
-            event.preventDefault();
-            const proj = appState.projects[appState.currentProjectId];
-            const labor = proj.labors.find(l => l.id === laborId);
-            if (!labor) return;
-
-            const currentVal = Number(labor.attendance[day] || 0);
-            let nextVal = 0;
-
-            if (currentVal === 0) {
-                nextVal = 1;      
-            } else if (currentVal === 1) {
-                nextVal = 0.5;    
-            } else {
-                nextVal = 0;      
-            }
-
-            labor.attendance[day] = nextVal;
-            labor.manualDays = null;
-            saveToLocalStorage();
-            updateRowOnly(labor);
-            updateSummaryAndFooter();
-
-            setTimeout(() => {
-                const updatedInput = document.querySelector(`input[data-labor-id="${laborId}"][data-day-index="${day}"]`);
-                if (updatedInput) updatedInput.focus();
-            }, 10);
         }
 
         // 스프레드시트 방식의 방향키 및 엔터 네비게이션 제어
@@ -2994,58 +3084,209 @@
             });
         }
 
-        // 특정 일자 일괄 등록/수정 모달 관리
+        // 특정 일자 일괄 등록/수정 모달 관리 (근로자 다중 선택 + 날짜 다중 선택)
         function openSpecificDateModal() {
             const proj = appState.projects[appState.currentProjectId];
             if (!proj) return;
-            
+
+            // ── 근로자 목록 렌더 ──
+            _renderLaborList(proj.labors, '');
+
+            // ── 날짜 그리드 렌더 ──
             const daysInMonth = new Date(proj.year, proj.month, 0).getDate();
-            const selectDay = document.getElementById('modalTargetDay');
-            selectDay.innerHTML = "";
-            
+            const grid = document.getElementById('dayCheckboxGrid');
+            grid.innerHTML = '';
+
+            const dayNames = ['일','월','화','수','목','금','토'];
+            const firstDow = new Date(proj.year, proj.month - 1, 1).getDay();
+
+            dayNames.forEach((n, i) => {
+                const h = document.createElement('div');
+                h.className = 'text-center py-0.5 rounded text-[10px] font-bold ' +
+                    (i === 0 ? 'text-rose-500' : i === 6 ? 'text-blue-500' : 'text-slate-400');
+                h.textContent = n;
+                grid.appendChild(h);
+            });
+
+            for (let i = 0; i < firstDow; i++) grid.appendChild(document.createElement('div'));
+
             for (let d = 1; d <= daysInMonth; d++) {
-                const opt = document.createElement('option');
-                opt.value = d;
-                opt.innerText = `${d}일`;
-                selectDay.appendChild(opt);
+                const dow = new Date(proj.year, proj.month - 1, d).getDay();
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.dataset.day = d;
+                btn.className = _dayBtnClass(false, dow === 0 || dow === 6, dow);
+                btn.textContent = d;
+                btn.addEventListener('click', () => {
+                    const active = btn.dataset.selected === 'true';
+                    btn.dataset.selected = active ? 'false' : 'true';
+                    btn.className = _dayBtnClass(!active, dow === 0 || dow === 6, dow);
+                    _updateSelectedCount();
+                });
+                grid.appendChild(btn);
             }
-            
+
+            _updateSelectedCount();
+            document.getElementById('laborSearchInModal').value = '';
             document.getElementById('specificDateModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        // 근로자 체크박스 목록 렌더링
+        function _renderLaborList(labors, keyword) {
+            const list = document.getElementById('laborCheckboxList');
+            list.innerHTML = '';
+            const kw = keyword.trim().toLowerCase();
+            const filtered = kw
+                ? labors.filter(l => l.name.toLowerCase().includes(kw) || (l.job || '').toLowerCase().includes(kw))
+                : labors;
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="p-3 text-slate-400 text-center text-xs">검색 결과 없음</div>';
+                _updateSelectedLaborCount();
+                return;
+            }
+
+            filtered.forEach(l => {
+                const row = document.createElement('label');
+                row.className = 'flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-purple-50 transition-colors';
+                row.innerHTML = `
+                    <input type="checkbox" data-labor-id="${l.id}" class="labor-check accent-purple-600 w-3.5 h-3.5 shrink-0" checked
+                        onchange="_updateSelectedLaborCount()">
+                    <span class="font-bold text-slate-700 truncate">${l.name}</span>
+                    <span class="text-slate-400 shrink-0">${l.job || '보통인부'}</span>
+                `;
+                list.appendChild(row);
+            });
+            _updateSelectedLaborCount();
+        }
+
+        function filterLaborListInModal() {
+            const proj = appState.projects[appState.currentProjectId];
+            if (!proj) return;
+            const kw = document.getElementById('laborSearchInModal').value;
+            _renderLaborList(proj.labors, kw);
+        }
+
+        function _updateSelectedLaborCount() {
+            const total   = document.querySelectorAll('#laborCheckboxList .labor-check').length;
+            const checked = document.querySelectorAll('#laborCheckboxList .labor-check:checked').length;
+            const el = document.getElementById('selectedLaborCount');
+            el.textContent = total > 0 ? `(${checked}/${total}명 선택)` : '';
+        }
+
+        function selectAllLabors() {
+            document.querySelectorAll('#laborCheckboxList .labor-check').forEach(cb => { cb.checked = true; });
+            _updateSelectedLaborCount();
+        }
+
+        function deselectAllLabors() {
+            document.querySelectorAll('#laborCheckboxList .labor-check').forEach(cb => { cb.checked = false; });
+            _updateSelectedLaborCount();
+        }
+
+        function _dayBtnClass(selected, isWeekend, dow) {
+            const base = 'rounded py-1 text-center text-[11px] font-bold transition-all border ';
+            if (selected) return base + 'bg-purple-600 text-white border-purple-600';
+            if (dow === 0) return base + 'text-rose-500 border-rose-100 hover:bg-rose-50';
+            if (dow === 6) return base + 'text-blue-500 border-blue-100 hover:bg-blue-50';
+            return base + 'text-slate-600 border-slate-200 hover:bg-slate-100';
+        }
+
+        function _updateSelectedCount() {
+            const count = document.querySelectorAll('#dayCheckboxGrid button[data-selected="true"]').length;
+            const el = document.getElementById('selectedDayCount');
+            el.textContent = count > 0 ? `(${count}일 선택됨)` : '';
+        }
+
+        function selectAllDays() {
+            const proj = appState.projects[appState.currentProjectId];
+            document.querySelectorAll('#dayCheckboxGrid button[data-day]').forEach(btn => {
+                const dow = new Date(proj.year, proj.month - 1, parseInt(btn.dataset.day)).getDay();
+                btn.dataset.selected = 'true';
+                btn.className = _dayBtnClass(true, dow === 0 || dow === 6, dow);
+            });
+            _updateSelectedCount();
+        }
+
+        function deselectAllDays() {
+            const proj = appState.projects[appState.currentProjectId];
+            document.querySelectorAll('#dayCheckboxGrid button[data-day]').forEach(btn => {
+                const dow = new Date(proj.year, proj.month - 1, parseInt(btn.dataset.day)).getDay();
+                btn.dataset.selected = 'false';
+                btn.className = _dayBtnClass(false, dow === 0 || dow === 6, dow);
+            });
+            _updateSelectedCount();
+        }
+
+        function selectWeekdays() {
+            const proj = appState.projects[appState.currentProjectId];
+            document.querySelectorAll('#dayCheckboxGrid button[data-day]').forEach(btn => {
+                const dow = new Date(proj.year, proj.month - 1, parseInt(btn.dataset.day)).getDay();
+                const isWeekday = dow !== 0 && dow !== 6;
+                btn.dataset.selected = isWeekday ? 'true' : 'false';
+                btn.className = _dayBtnClass(isWeekday, !isWeekday, dow);
+            });
+            _updateSelectedCount();
+        }
+
+        function selectWeekends() {
+            const proj = appState.projects[appState.currentProjectId];
+            document.querySelectorAll('#dayCheckboxGrid button[data-day]').forEach(btn => {
+                const dow = new Date(proj.year, proj.month - 1, parseInt(btn.dataset.day)).getDay();
+                const isWeekend = dow === 0 || dow === 6;
+                btn.dataset.selected = isWeekend ? 'true' : 'false';
+                btn.className = _dayBtnClass(isWeekend, isWeekend, dow);
+            });
+            _updateSelectedCount();
         }
 
         function closeSpecificDateModal() {
             document.getElementById('specificDateModal').classList.add('hidden');
         }
 
-        // 선택한 일자 일괄 처리 엔진
+        // 선택한 근로자 × 복수 일자 일괄 처리 엔진
         function saveSpecificDateAttendance() {
             const proj = appState.projects[appState.currentProjectId];
             if (!proj) return;
 
-            const day = parseInt(document.getElementById('modalTargetDay').value);
-            const value = parseFloat(document.getElementById('modalTargetValue').value);
-            const searchKeyword = document.getElementById('searchFilter').value.trim().toLowerCase();
+            // 선택된 근로자 ID 수집
+            const selectedLaborIds = new Set(
+                [...document.querySelectorAll('#laborCheckboxList .labor-check:checked')]
+                    .map(cb => cb.dataset.laborId)
+            );
 
-            const targetLabors = proj.labors.filter(l => {
-                const nameMatch = l.name.toLowerCase().includes(searchKeyword);
-                const jobMatch = (l.job || '').toLowerCase().includes(searchKeyword);
-                return nameMatch || jobMatch;
-            });
-
-            if (targetLabors.length === 0) {
-                showCustomAlert("일괄 변경을 적용할 대상 근로자가 없습니다.");
+            if (selectedLaborIds.size === 0) {
+                showCustomAlert("적용할 근로자를 한 명 이상 선택해 주세요.");
                 return;
             }
 
+            // 선택된 날짜 수집
+            const selectedDays = [...document.querySelectorAll('#dayCheckboxGrid button[data-selected="true"]')]
+                .map(btn => parseInt(btn.dataset.day));
+
+            if (selectedDays.length === 0) {
+                showCustomAlert("적용할 날짜를 하나 이상 선택해 주세요.");
+                return;
+            }
+
+            const value = parseFloat(document.getElementById('modalTargetValue').value);
+
+            const targetLabors = proj.labors.filter(l => selectedLaborIds.has(l.id));
+
             targetLabors.forEach(l => {
-                l.attendance[day] = value;
-                l.manualDays = null; 
+                selectedDays.forEach(day => { l.attendance[day] = value; });
+                l.manualDays = null;
             });
 
             saveToLocalStorage();
             updateHeaderAndTable();
             closeSpecificDateModal();
-            showToast(`${day}일의 출역 데이터가 일괄 변경되었습니다.`);
+
+            const dayStr = selectedDays.length <= 10
+                ? selectedDays.join(', ') + '일'
+                : `${selectedDays[0]}~${selectedDays[selectedDays.length - 1]}일 등 ${selectedDays.length}개`;
+            showToast(`${targetLabors.length}명 × ${dayStr} 출역 데이터가 일괄 변경되었습니다.`);
         }
 
         // 지급 단가 일괄 변경 도구
@@ -3263,7 +3504,9 @@
             const totalWages = Math.floor(labor.price * effectiveDays);
             
             // 귀속 연도 및 귀속월 기준 정확한 '만 나이' 기반 세제 혜택 판정
-            const { isPensionExempt, isEmploymentExempt } = getExactInsuranceAge(labor.ssn, proj.year, proj.month);
+            // [수정] 귀속월 말일 기준으로 나이 계산 — 해당 월 중 생일이 지났으면 면제 혜택 반영
+            const lastDayOfMonth = new Date(proj.year, proj.month, 0).getDate();
+            const { age, isPensionExempt, isEmploymentExempt } = getExactInsuranceAge(labor.ssn, proj.year, proj.month, lastDayOfMonth);
 
             let pension = 0;
             let health = 0;
@@ -4118,6 +4361,9 @@
         // ============================================================
         let aiScanData = null;
         let aiSelectedFile = null;
+        // [수정] Gemini API 키를 sessionStorage 대신 메모리 변수에만 보관
+        // — 브라우저 스토리지에 저장되지 않아 XSS 탈취 위험 차단, 페이지 이탈 시 자동 소멸
+        let _geminiApiKeyMemory = '';
 
         function openAiScanModal() {
             aiScanData = null;
@@ -4131,9 +4377,8 @@
             document.getElementById('aiResultEditArea').classList.add('hidden');
             document.getElementById('aiFileInput').value = '';
             document.getElementById('aiExtraInstruction').value = '';
-            // 저장된 API 키 불러오기 (세션 스토리지: 탭 종료 시 자동 삭제)
-            const savedKey = sessionStorage.getItem('gemini_api_key') || '';
-            document.getElementById('geminiApiKey').value = savedKey;
+            // [수정] 메모리 변수에서 API 키 복원 (스토리지 미사용)
+            document.getElementById('geminiApiKey').value = _geminiApiKeyMemory;
             lucide.createIcons();
         }
 
@@ -4218,8 +4463,8 @@
                 return;
             }
 
-            // API 키 저장 (세션 스토리지 사용 — 탭 닫으면 자동 만료)
-            sessionStorage.setItem('gemini_api_key', apiKey);
+            // [수정] API 키를 메모리 변수에만 저장 (sessionStorage 미사용)
+            _geminiApiKeyMemory = apiKey;
 
             document.getElementById('aiLoadingArea').classList.remove('hidden');
             document.getElementById('aiResultArea').classList.add('hidden');
