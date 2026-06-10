@@ -57,6 +57,11 @@
                 margin: 0.3cm;
             }
         }
+        /* 드래그 범위 선택 하이라이트 */
+        .drag-highlight {
+            background-color: #fed7aa !important;
+            outline: 2px solid #f97316 !important;
+        }
     </style>
 </head>
 <body class="text-slate-800 flex flex-col min-h-screen text-xs">
@@ -294,6 +299,9 @@
                         <button onclick="openSpecificDateModal()" class="text-[10px] text-purple-600 hover:bg-purple-50 px-1.5 py-0.5 rounded font-bold flex items-center gap-0.5 transition-all">
                             <i data-lucide="calendar" class="w-3 h-3"></i> 날짜 일괄기입
                         </button>
+                        <button onclick="toggleDragRangeMode()" id="dragRangeBtn" class="text-[10px] text-orange-600 hover:bg-orange-50 px-1.5 py-0.5 rounded font-bold flex items-center gap-0.5 transition-all border border-transparent" title="드래그로 여러 날짜를 한 번에 선택하여 출역값을 일괄 기입합니다.">
+                            <i data-lucide="hand" class="w-3 h-3"></i> 드래그 범위 기입
+                        </button>
                         <span class="h-3 border-r border-slate-200"></span>
                         
                         <!-- 마우스 클릭 퀵모드 토글 스위치 -->
@@ -387,19 +395,21 @@
 
     <!-- 팝업 모달 1: 근로자 상세 정보 조회 및 수정 (no-print) -->
     <div id="laborDetailModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center z-50 no-print">
-        <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-150">
+        <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
             <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
-                <h3 class="font-bold flex items-center gap-1.5">
-                    <i data-lucide="user-check" class="w-4 h-4 text-blue-400"></i> 근로자 상세 신상 정보
+                <h3 class="font-bold flex items-center gap-2">
+                    <i data-lucide="user-check" class="w-4 h-4 text-blue-400"></i>
+                    <span>근로자 상세 신상 정보</span>
+                    <span id="detailModalTitle" class="text-sm font-black text-blue-300 ml-1"></span>
                 </h3>
                 <button onclick="closeDetailModal()" class="text-slate-400 hover:text-white transition-all">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-            <div class="p-5 space-y-4">
+            <div class="p-5 space-y-4 overflow-y-auto max-h-[75vh]">
                 <input type="hidden" id="detailLaborId">
                 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-3 gap-3">
                     <div>
                         <label class="block font-bold text-slate-500 mb-1 text-[10px]">성명</label>
                         <input type="text" id="detailName" class="w-full bg-slate-50 border border-slate-200 rounded p-2 focus:ring-1 focus:ring-blue-500 outline-none font-bold">
@@ -408,14 +418,13 @@
                         <label class="block font-bold text-slate-500 mb-1 text-[10px]">직종</label>
                         <input type="text" id="detailJob" class="w-full bg-slate-50 border border-slate-200 rounded p-2 focus:ring-1 focus:ring-blue-500 outline-none">
                     </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1 text-[10px]">주민등록번호</label>
+                        <input type="text" id="detailSsn" class="w-full bg-slate-50 border border-slate-200 rounded p-2 font-mono focus:ring-1 focus:ring-blue-500 outline-none" maxlength="14">
+                    </div>
                 </div>
 
-                <div>
-                    <label class="block font-bold text-slate-500 mb-1 text-[10px]">주민등록번호 (만 나이 및 보험 공제 자동 적용의 기준이 됩니다)</label>
-                    <input type="text" id="detailSsn" class="w-full bg-slate-50 border border-slate-200 rounded p-2 font-mono focus:ring-1 focus:ring-blue-500 outline-none" maxlength="14">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-3 gap-3">
                     <div>
                         <label class="block font-bold text-slate-500 mb-1 text-[10px]">연락처</label>
                         <input type="text" id="detailPhone" placeholder="010-1234-5678" class="w-full bg-slate-50 border border-slate-200 rounded p-2 font-mono focus:ring-1 focus:ring-blue-500 outline-none" maxlength="13">
@@ -424,11 +433,10 @@
                         <label class="block font-bold text-slate-500 mb-1 text-[10px]">지급 은행명</label>
                         <input type="text" id="detailBank" placeholder="예: 국민은행" class="w-full bg-slate-50 border border-slate-200 rounded p-2 focus:ring-1 focus:ring-blue-500 outline-none">
                     </div>
-                </div>
-
-                <div>
-                    <label class="block font-bold text-slate-500 mb-1 text-[10px]">계좌번호</label>
-                    <input type="text" id="detailAccount" placeholder="숫자와 하이픈만 입력" class="w-full bg-slate-50 border border-slate-200 rounded p-2 font-mono focus:ring-1 focus:ring-blue-500 outline-none">
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1 text-[10px]">계좌번호</label>
+                        <input type="text" id="detailAccount" placeholder="숫자와 하이픈만 입력" class="w-full bg-slate-50 border border-slate-200 rounded p-2 font-mono focus:ring-1 focus:ring-blue-500 outline-none">
+                    </div>
                 </div>
 
                 <div>
@@ -615,37 +623,93 @@
 
     <!-- 팝업 모달 4: 근로자 복수 일괄 등록 모달 (no-print) -->
     <div id="bulkUserModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center z-50 no-print">
-        <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden">
-            <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
+        <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-4xl overflow-hidden max-h-[92vh] flex flex-col">
+            <div class="bg-slate-900 text-white p-4 flex justify-between items-center shrink-0">
                 <h3 class="font-bold flex items-center gap-1.5">
-                    <i data-lucide="users" class="w-4 h-4 text-purple-400"></i> 근로자 복수 빠른 일괄 추가
+                    <i data-lucide="users" class="w-4 h-4 text-purple-400"></i> 근로자 복수 일괄 추가
+                    <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-normal">이름·주민번호·연락처·주소·은행 일괄 입력</span>
                 </h3>
                 <button onclick="closeBulkUserModal()" class="text-slate-400 hover:text-white transition-all">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-            <div class="p-5 space-y-4">
+
+            <div class="p-4 space-y-3 overflow-y-auto flex-1">
+                <!-- 공통 설정 -->
+                <div class="grid grid-cols-3 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1 text-[10px]">일괄 적용 직종</label>
+                        <input type="text" id="bulkJob" value="보통인부" class="w-full bg-white border border-slate-200 rounded p-1.5 focus:ring-1 focus:ring-purple-500 outline-none text-xs">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1 text-[10px]">일괄 적용 단가</label>
+                        <input type="text" id="bulkPrice" value="180,000" class="w-full bg-white border border-slate-200 rounded p-1.5 font-mono focus:ring-1 focus:ring-purple-500 outline-none text-xs">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1 text-[10px]">일괄 적용 은행명</label>
+                        <input type="text" id="bulkBank" placeholder="예: 농협은행" class="w-full bg-white border border-slate-200 rounded p-1.5 focus:ring-1 focus:ring-purple-500 outline-none text-xs">
+                    </div>
+                </div>
+
+                <!-- 입력 열 선택 -->
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                    <p class="font-bold text-purple-800 text-[11px] mb-2">📋 입력 방식 선택 — 열 구분: <code class="bg-purple-100 px-1 rounded">Tab</code> 또는 <code class="bg-purple-100 px-1 rounded">콤마(,)</code> · 행 구분: <code class="bg-purple-100 px-1 rounded">줄바꿈(Enter)</code></p>
+                    <div class="flex flex-wrap gap-2 text-[10px]">
+                        <label class="flex items-center gap-1 font-bold cursor-pointer">
+                            <input type="radio" name="bulkMode" value="name_only" id="bulkModeNameOnly" checked onchange="updateBulkPlaceholder()" class="accent-purple-600">
+                            이름만
+                        </label>
+                        <label class="flex items-center gap-1 font-bold cursor-pointer">
+                            <input type="radio" name="bulkMode" value="name_ssn" onchange="updateBulkPlaceholder()" class="accent-purple-600">
+                            이름 + 주민번호
+                        </label>
+                        <label class="flex items-center gap-1 font-bold cursor-pointer">
+                            <input type="radio" name="bulkMode" value="name_ssn_phone" onchange="updateBulkPlaceholder()" class="accent-purple-600">
+                            이름 + 주민번호 + 연락처
+                        </label>
+                        <label class="flex items-center gap-1 font-bold cursor-pointer">
+                            <input type="radio" name="bulkMode" value="name_ssn_phone_addr" onchange="updateBulkPlaceholder()" class="accent-purple-600">
+                            이름 + 주민번호 + 연락처 + 주소
+                        </label>
+                        <label class="flex items-center gap-1 font-bold cursor-pointer">
+                            <input type="radio" name="bulkMode" value="full" onchange="updateBulkPlaceholder()" class="accent-purple-600">
+                            전체 (이름 + 주민번호 + 연락처 + 주소 + 계좌번호)
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 미리보기 헤더 표시 -->
+                <div id="bulkColumnHeader" class="text-[10px] font-mono bg-slate-100 border border-slate-200 rounded px-3 py-1.5 text-slate-600"></div>
+
+                <!-- 텍스트 입력 영역 -->
                 <div>
-                    <label class="block font-bold text-slate-500 mb-1">이름 목록 기입</label>
-                    <textarea id="bulkNames" rows="5" placeholder="여러 명 등록 시 줄바꿈(엔터) 또는 콤마(,)로 구분하여 입력하세요.&#10;예:&#10;홍길동&#10;이순신,강감찬&#10;장보고" class="w-full bg-slate-50 border border-slate-200 rounded p-2 focus:ring-1 focus:ring-purple-500 outline-none font-sans text-xs"></textarea>
+                    <label class="block font-bold text-slate-500 mb-1 text-[10px]">근로자 목록 입력</label>
+                    <textarea id="bulkNames" rows="8"
+                        class="w-full bg-slate-50 border border-slate-200 rounded p-2 focus:ring-1 focus:ring-purple-500 outline-none font-mono text-xs leading-relaxed resize-y"
+                        oninput="renderBulkPreview()"
+                        placeholder="홍길동"></textarea>
                 </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-bold text-slate-500 mb-1">일괄 적용 직종</label>
-                        <input type="text" id="bulkJob" value="보통인부" class="w-full bg-slate-50 border border-slate-200 rounded p-2 focus:ring-1 focus:ring-purple-500 outline-none">
+
+                <!-- 입력 미리보기 테이블 -->
+                <div id="bulkPreviewArea" class="hidden">
+                    <p class="font-bold text-slate-600 text-[10px] mb-1">👁 등록 미리보기 <span id="bulkPreviewCount" class="text-purple-600"></span></p>
+                    <div class="overflow-x-auto max-h-44 border border-slate-200 rounded">
+                        <table class="w-full text-[10px] text-left">
+                            <thead class="bg-slate-200 sticky top-0">
+                                <tr id="bulkPreviewHead"></tr>
+                            </thead>
+                            <tbody id="bulkPreviewBody"></tbody>
+                        </table>
                     </div>
-                    <div>
-                        <label class="block font-bold text-slate-500 mb-1">일괄 적용 단가</label>
-                        <input type="text" id="bulkPrice" value="180,000" class="w-full bg-slate-50 border border-slate-200 rounded p-2 font-mono focus:ring-1 focus:ring-purple-500 outline-none">
-                    </div>
-                </div>
-                <div class="text-[10px] text-slate-400">
-                    💡 일괄 등록된 인원의 주민등록번호, 계좌 정보 등은 테이블 이름 클릭 후 개별 지정하시면 정합성 있게 입력됩니다.
                 </div>
             </div>
-            <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2 text-xs">
-                <button onclick="closeBulkUserModal()" class="px-4 py-2 font-medium text-slate-500 hover:text-slate-800">취소</button>
-                <button onclick="saveBulkUsers()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2 rounded shadow-sm">일괄 등록 실행</button>
+
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center gap-2 text-xs shrink-0">
+                <span class="text-slate-400">⚠️ 주민번호 미입력 시 임시 번호가 생성됩니다. 등록 후 이름 클릭 → 수정 권장.</span>
+                <div class="flex gap-2">
+                    <button onclick="closeBulkUserModal()" class="px-4 py-2 font-medium text-slate-500 hover:text-slate-800">취소</button>
+                    <button onclick="saveBulkUsers()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2 rounded shadow-sm">일괄 등록 실행</button>
+                </div>
             </div>
         </div>
     </div>
@@ -833,7 +897,35 @@
         </div>
     </div>
 
-    <!-- UI 토스트 메시지 -->
+    <!-- 드래그 범위 기입 — 화면 우하단 플로팅 패널 (테이블 조작을 막지 않음) -->
+    <div id="dragRangePanel" class="fixed bottom-16 right-5 hidden z-40 no-print">
+        <div class="bg-white rounded-xl shadow-2xl border-2 border-orange-400 w-64 overflow-hidden">
+            <div class="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-3 py-2 flex justify-between items-center">
+                <span class="font-bold text-xs flex items-center gap-1.5">
+                    <span class="inline-block w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                    드래그 범위 기입 ON
+                </span>
+                <button onclick="closeDragRangeModal()" class="text-orange-100 hover:text-white text-[11px] font-bold">✕ 종료</button>
+            </div>
+            <div class="p-3 space-y-2 text-xs">
+                <p class="text-slate-500 leading-snug">출근 셀을 <strong class="text-orange-600">클릭한 채 드래그</strong>하면 지나간 셀에 아래 값이 기입됩니다.</p>
+                <div class="grid grid-cols-3 gap-1.5">
+                    <label class="flex items-center justify-center gap-1 border rounded py-1.5 cursor-pointer font-bold text-[11px] transition-all" id="dragLbl1">
+                        <input type="radio" name="dragValue" value="1" checked class="accent-orange-500" onchange="updateDragLabels()"> 1.0
+                    </label>
+                    <label class="flex items-center justify-center gap-1 border rounded py-1.5 cursor-pointer font-bold text-[11px] transition-all" id="dragLbl05">
+                        <input type="radio" name="dragValue" value="0.5" class="accent-orange-500" onchange="updateDragLabels()"> 0.5
+                    </label>
+                    <label class="flex items-center justify-center gap-1 border rounded py-1.5 cursor-pointer font-bold text-[11px] transition-all" id="dragLbl0">
+                        <input type="radio" name="dragValue" value="0" class="accent-orange-500" onchange="updateDragLabels()"> 0 삭제
+                    </label>
+                </div>
+                <div id="dragRangeStatus" class="text-center text-orange-600 font-bold py-0.5 hidden">
+                    🖱 드래그 중 — <span id="dragRangeCount"></span>칸 선택
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 transform translate-y-10 opacity-0 transition-all duration-300 z-50 text-xs font-semibold">
         <i data-lucide="check-circle-2" class="text-emerald-400 w-4 h-4"></i>
         <span id="toastMessage">작업이 저장되었습니다.</span>
@@ -943,7 +1035,11 @@
         };
 
         // 주민등록번호를 파싱하여 프로젝트 귀속 시점 기준 만 나이를 연산하는 핵심 함수
+        // 동일 인자에 대한 반복 호출 비용 절감을 위해 메모이제이션 적용
+        const _insuranceAgeCache = new Map();
         function getExactInsuranceAge(ssn, projectYear, projectMonth) {
+            const cacheKey = `${ssn}|${projectYear}|${projectMonth}`;
+            if (_insuranceAgeCache.has(cacheKey)) return _insuranceAgeCache.get(cacheKey);
             if (!ssn) return { age: 30, birthYear: 1996, isPensionExempt: false, isEmploymentExempt: false };
             const clean = ssn.replace(/[^0-9]/g, '');
             if (clean.length < 7) return { age: 30, birthYear: 1996, isPensionExempt: false, isEmploymentExempt: false };
@@ -978,12 +1074,14 @@
             // 만 65세 이상은 고용보험(근로자부 실업급여 0.9%) 징수 대상에서 법적 제외
             const isEmploymentExempt = exactAge >= 65;
 
-            return {
+            const result = {
                 age: exactAge,
                 birthYear,
                 isPensionExempt,
                 isEmploymentExempt
             };
+            _insuranceAgeCache.set(cacheKey, result);
+            return result;
         }
 
         // 커스텀 알림/컨펌창 헬퍼 함수
@@ -1116,7 +1214,8 @@
             bindFormatters();
             applyZoom(95); 
             applyDensity('normal'); 
-            setupKeyboardNavigation(); // 엔터/방향키 조작 이벤트 바인딩
+            setupKeyboardNavigation();
+            setupDragRangeListeners(); // 드래그 범위 기입 이벤트 등록
         };
 
         function initApp() {
@@ -1138,7 +1237,25 @@
         }
 
         function saveToLocalStorage() {
-            localStorage.setItem('labor_payment_system_data_v4', JSON.stringify(appState));
+            try {
+                localStorage.setItem('labor_payment_system_data_v4', JSON.stringify(appState));
+            } catch (e) {
+                if (e.name === 'QuotaExceededError' || e.code === 22) {
+                    // 사진 데이터가 커서 용량 초과인 경우 사진만 제외하고 저장 시도
+                    try {
+                        const stateWithoutPhotos = JSON.parse(JSON.stringify(appState));
+                        Object.values(stateWithoutPhotos.projects).forEach(proj => {
+                            if (proj.labors) {
+                                proj.labors.forEach(l => { delete l.rosterPhotos; });
+                            }
+                        });
+                        localStorage.setItem('labor_payment_system_data_v4', JSON.stringify(stateWithoutPhotos));
+                        showToast('⚠️ 저장 공간 부족으로 첨부 사진 데이터가 제외되어 저장되었습니다. 불필요한 사진을 삭제해 주세요.');
+                    } catch (e2) {
+                        showCustomAlert('저장 공간이 부족합니다. 백업 후 데이터를 정리해 주세요.');
+                    }
+                }
+            }
         }
 
         // 대장 테이블 배율 확대/축소
@@ -1285,6 +1402,7 @@
                 appState.currentProjectId = selectProject.value;
                 saveToLocalStorage();
             }
+            _insuranceAgeCache.clear(); // 프로젝트 변경 시 나이 캐시 초기화
             updateHeaderAndTable();
         }
 
@@ -1464,9 +1582,9 @@
                 }
 
                 // 법적 면제 안내 배지 처리
-                const pensionBadge = isPensionExempt ? `<span class="block text-[8px] text-rose-500 font-bold scale-90">연금면제</span>` : '';
-                const employBadge = isEmploymentExempt ? `<span class="block text-[8px] text-orange-500 font-bold scale-90">고용면제</span>` : '';
-                const incomeTaxBadge = (calc.incomeTax === 0 && labor.price > 150000) ? `<span class="block text-[7px] text-blue-500 scale-75">소액부징수</span>` : '';
+                const pensionBadge = isPensionExempt ? `<span class="block text-[11px] text-white bg-rose-500 font-bold rounded px-1 mt-0.5 leading-tight">연금면제</span>` : '';
+                const employBadge = isEmploymentExempt ? `<span class="block text-[11px] text-white bg-orange-500 font-bold rounded px-1 mt-0.5 leading-tight">고용면제</span>` : '';
+                const incomeTaxBadge = (calc.incomeTax === 0 && labor.price > 150000) ? `<span class="block text-[10px] text-white bg-blue-400 font-bold rounded px-1 mt-0.5 leading-tight">소액부징수</span>` : '';
 
                 html += `
                     <td class="p-0 border-r border-slate-200 bg-amber-50/50 print:border-black print:bg-white">
@@ -1483,28 +1601,28 @@
                             class="w-full text-right bg-transparent border border-transparent hover:border-slate-300 font-extrabold rounded px-1 py-0.5 font-mono text-slate-800"
                         >
                     </td>
-                    <td class="${pad} border-r border-slate-200 text-right font-extrabold text-slate-900 font-mono print:border-black print:text-black">${commaFormatter(calc.totalWages)}</td>
+                    <td class="${pad} border-r border-slate-200 text-right font-extrabold text-slate-900 font-mono print:border-black print:text-black" data-result-labor="${labor.id}" data-result-field="totalWages">${commaFormatter(calc.totalWages)}</td>
                     
                     <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600">
-                        <span class="block font-semibold">${commaFormatter(calc.incomeTax)}</span>
-                        <span class="text-[8px] text-slate-400 block">${commaFormatter(calc.localTax)}</span>
+                        <span class="block font-semibold" data-result-labor="${labor.id}" data-result-field="incomeTax">${commaFormatter(calc.incomeTax)}</span>
+                        <span class="text-[8px] text-slate-400 block" data-result-labor="${labor.id}" data-result-field="localTax">${commaFormatter(calc.localTax)}</span>
                         ${incomeTaxBadge}
                     </td>
                     <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600">
-                        <span class="block">${commaFormatter(calc.employment)}</span>
+                        <span class="block" data-result-labor="${labor.id}" data-result-field="employment">${commaFormatter(calc.employment)}</span>
                         ${employBadge}
                     </td>
                     <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600">
-                        <span class="block font-semibold">${commaFormatter(calc.health)}</span>
-                        <span class="text-[8px] text-slate-400 block">${commaFormatter(calc.care)}</span>
+                        <span class="block font-semibold" data-result-labor="${labor.id}" data-result-field="health">${commaFormatter(calc.health)}</span>
+                        <span class="text-[8px] text-slate-400 block" data-result-labor="${labor.id}" data-result-field="care">${commaFormatter(calc.care)}</span>
                     </td>
                     <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600">
-                        <span class="block">${commaFormatter(calc.pension)}</span>
+                        <span class="block" data-result-labor="${labor.id}" data-result-field="pension">${commaFormatter(calc.pension)}</span>
                         ${pensionBadge}
                     </td>
                     
-                    <td class="${pad} border-r border-slate-200 text-right font-bold text-red-600 font-mono print:border-black print:text-black">${commaFormatter(calc.totalDeduction)}</td>
-                    <td class="${pad} border-r border-slate-200 text-right font-black text-blue-700 bg-blue-50/20 font-mono print:border-black print:text-black">${commaFormatter(calc.netPay)}</td>
+                    <td class="${pad} border-r border-slate-200 text-right font-bold text-red-600 font-mono print:border-black print:text-black" data-result-labor="${labor.id}" data-result-field="totalDeduction">${commaFormatter(calc.totalDeduction)}</td>
+                    <td class="${pad} border-r border-slate-200 text-right font-black text-blue-700 bg-blue-50/20 font-mono print:border-black print:text-black" data-result-labor="${labor.id}" data-result-field="netPay">${commaFormatter(calc.netPay)}</td>
                     
                     <td class="p-1 no-print flex items-center justify-center gap-1">
                         <button onclick="printContractInNewTab('${labor.id}')" class="text-blue-600 hover:text-white hover:bg-blue-600 border border-blue-500 rounded px-1 py-0.5 font-bold text-[9.5px] transition-all" title="표준 일용 근로 계약서">
@@ -1546,6 +1664,17 @@
             const labor = proj.labors.find(l => l.id === laborId);
             if (!labor) return;
 
+            // 헤더 타이틀: 이름 — N일
+            const daysInMonth = new Date(proj.year, proj.month, 0).getDate();
+            let autoDays = 0;
+            for (let d = 1; d <= daysInMonth; d++) {
+                if (labor.attendance[d]) autoDays += Number(labor.attendance[d]);
+            }
+            const effectiveDays = (labor.manualDays !== null && labor.manualDays !== undefined)
+                ? labor.manualDays : autoDays;
+            const titleEl = document.getElementById('detailModalTitle');
+            if (titleEl) titleEl.textContent = `${labor.name}  —  ${effectiveDays}일 출역`;
+
             document.getElementById('detailLaborId').value = labor.id;
             document.getElementById('detailName').value = labor.name || "";
             document.getElementById('detailJob').value = labor.job || "";
@@ -1561,6 +1690,7 @@
             document.getElementById('detailNationality').value = labor.nationality || '';
 
             document.getElementById('laborDetailModal').classList.remove('hidden');
+            lucide.createIcons();
         }
 
         function closeDetailModal() {
@@ -1627,7 +1757,7 @@
 
             const duplicated = {
                 ...JSON.parse(JSON.stringify(labor)),
-                id: "l_dup_" + Date.now(),
+                id: "l_dup_" + (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '_' + Math.random().toString(36).substr(2, 9)),
                 name: labor.name + " (복사)",
                 ssn: mockSsn,
                 manualDays: null
@@ -1647,29 +1777,39 @@
                 return;
             }
 
+            const daysInMonthForCopy = new Date(proj.year, proj.month, 0).getDate();
             let tsv = "성명\t주민번호\t직종\t근무일수\t일당단가\t지급총액\t소득세\t주민세\t고용보험\t건강보험\t요양보험\t국민연금\t공제계\t실수령액\n";
             
             proj.labors.forEach(l => {
                 let autoDays = 0;
-                for (let d = 1; d <= 31; d++) {
+                for (let d = 1; d <= daysInMonthForCopy; d++) {
                     if (l.attendance[d]) autoDays += Number(l.attendance[d]);
                 }
                 const calc = calculateDeductions(l, autoDays);
                 tsv += `${l.name}\t${l.ssn}\t${l.job || '보통인부'}\t${calc.effectiveDays}\t${l.price}\t${calc.totalWages}\t${calc.incomeTax}\t${calc.localTax}\t${calc.employment}\t${calc.health}\t${calc.care}\t${calc.pension}\t${calc.totalDeduction}\t${calc.netPay}\n`;
             });
 
-            const tempTextArea = document.createElement("textarea");
-            tempTextArea.value = tsv;
-            document.body.appendChild(tempTextArea);
-            tempTextArea.select();
-            
-            try {
-                document.execCommand('copy');
-                showToast("대장 데이터가 엑셀 규격(클립보드)으로 복사되었습니다. 엑셀에서 바로 붙여넣기하세요!");
-            } catch (err) {
-                showCustomAlert("클립보드 복사 중 에러가 발생하였습니다.");
+            // navigator.clipboard (HTTPS/localhost 필요); 미지원 환경은 execCommand fallback
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(tsv)
+                    .then(() => showToast("대장 데이터가 엑셀 규격(클립보드)으로 복사되었습니다. 엑셀에서 바로 붙여넣기하세요!"))
+                    .catch(() => showCustomAlert("클립보드 복사 권한이 거부되었습니다. 브라우저 권한을 확인해주세요."));
+            } else {
+                // 구형 브라우저 fallback
+                const tempTextArea = document.createElement("textarea");
+                tempTextArea.value = tsv;
+                tempTextArea.style.position = "fixed";
+                tempTextArea.style.opacity = "0";
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast("대장 데이터가 엑셀 규격(클립보드)으로 복사되었습니다. 엑셀에서 바로 붙여넣기하세요!");
+                } catch (err) {
+                    showCustomAlert("클립보드 복사 중 에러가 발생하였습니다.");
+                }
+                document.body.removeChild(tempTextArea);
             }
-            document.body.removeChild(tempTextArea);
         }
 
         // [실무 기능] 데이터 전체 영구 포맷
@@ -1730,8 +1870,87 @@
                 }
                 labor.manualDays = null; 
                 saveToLocalStorage();
+                updateRowOnly(labor);        // 해당 행만 갱신
+                updateSummaryAndFooter();    // 요약 및 합계행 갱신
+            }
+        }
+
+        // 특정 근로자 행의 계산 결과 셀만 갱신 (전체 재렌더링 방지)
+        function updateRowOnly(labor) {
+            const proj = appState.projects[appState.currentProjectId];
+            const daysInMonth = new Date(proj.year, proj.month, 0).getDate();
+            let autoDays = 0;
+            for (let d = 1; d <= daysInMonth; d++) {
+                if (labor.attendance[d]) autoDays += Number(labor.attendance[d]);
+            }
+            const calc = calculateDeductions(labor, autoDays);
+            const hasManualDays = (labor.manualDays !== null && labor.manualDays !== undefined);
+
+            // 해당 행의 일수 입력 셀 업데이트
+            const daysInput = document.querySelector(`input[onchange*="updateLaborDays('${labor.id}'"]`);
+            if (daysInput) daysInput.value = calc.effectiveDays;
+
+            // 해당 행의 계산 결과 셀들을 data-labor-id로 찾아 갱신
+            const resultCells = document.querySelectorAll(`[data-result-labor="${labor.id}"]`);
+            if (resultCells.length > 0) {
+                resultCells.forEach(el => {
+                    const field = el.getAttribute('data-result-field');
+                    if (field === 'totalWages') el.textContent = commaFormatter(calc.totalWages);
+                    else if (field === 'incomeTax') el.textContent = commaFormatter(calc.incomeTax);
+                    else if (field === 'localTax') el.textContent = commaFormatter(calc.localTax);
+                    else if (field === 'employment') el.textContent = commaFormatter(calc.employment);
+                    else if (field === 'health') el.textContent = commaFormatter(calc.health);
+                    else if (field === 'care') el.textContent = commaFormatter(calc.care);
+                    else if (field === 'pension') el.textContent = commaFormatter(calc.pension);
+                    else if (field === 'totalDeduction') el.textContent = commaFormatter(calc.totalDeduction);
+                    else if (field === 'netPay') el.textContent = commaFormatter(calc.netPay);
+                });
+            } else {
+                // data-result-labor 속성이 없는 구형 렌더링 폴백 — 전체 재렌더링
                 updateHeaderAndTable();
             }
+        }
+
+        // 요약 통계 및 합계행만 갱신
+        function updateSummaryAndFooter() {
+            const proj = appState.projects[appState.currentProjectId];
+            if (!proj) return;
+            const daysInMonth = new Date(proj.year, proj.month, 0).getDate();
+            const searchKeyword = document.getElementById('searchFilter').value.trim().toLowerCase();
+            const insuranceFilterVal = document.getElementById('insuranceFilter').value;
+
+            let targetLabors = proj.labors.filter(l => {
+                const nameMatch = l.name.toLowerCase().includes(searchKeyword);
+                const jobMatch = (l.job || '').toLowerCase().includes(searchKeyword);
+                const ssnMatch = l.ssn.includes(searchKeyword);
+                return nameMatch || jobMatch || ssnMatch;
+            });
+            if (insuranceFilterVal !== "all") {
+                targetLabors = targetLabors.filter(l => {
+                    const { isPensionExempt, isEmploymentExempt } = getExactInsuranceAge(l.ssn, proj.year, proj.month);
+                    let autoDays = 0;
+                    for (let d = 1; d <= daysInMonth; d++) {
+                        if (d <= daysInMonth && l.attendance[d]) autoDays += Number(l.attendance[d]);
+                    }
+                    const finalDays = (l.manualDays !== null && l.manualDays !== undefined) ? l.manualDays : autoDays;
+                    if (insuranceFilterVal === "pensionExempt") return isPensionExempt;
+                    if (insuranceFilterVal === "employmentExempt") return isEmploymentExempt;
+                    if (insuranceFilterVal === "insuranceTarget") return finalDays >= 8;
+                    return true;
+                });
+            }
+
+            const computedRowsData = targetLabors.map(labor => {
+                let autoDays = 0;
+                for (let d = 1; d <= daysInMonth; d++) {
+                    if (labor.attendance[d]) autoDays += Number(labor.attendance[d]);
+                }
+                const calc = calculateDeductions(labor, autoDays);
+                return { labor, autoDays, calc };
+            });
+
+            renderTotalRow(computedRowsData, daysInMonth);
+            calculateAndDisplaySummary(computedRowsData);
         }
 
         // 마우스 원클릭 퀵모드 전환 지원
@@ -1758,7 +1977,8 @@
             labor.attendance[day] = nextVal;
             labor.manualDays = null;
             saveToLocalStorage();
-            updateHeaderAndTable();
+            updateRowOnly(labor);
+            updateSummaryAndFooter();
 
             setTimeout(() => {
                 const updatedInput = document.querySelector(`input[data-labor-id="${laborId}"][data-day-index="${day}"]`);
@@ -1803,12 +2023,13 @@
                     e.preventDefault();
                     let prevDay = dayIdx - 1;
                     if (prevDay < 1) {
-                        const prevRowLastInput = visibleInputs.reverse().find(input => {
-                            return parseInt(input.getAttribute('data-day-index')) === daysInMonth && 
-                                   visibleInputs.indexOf(input) < currentIndex;
+                        // reverse() 는 원본 배열을 변경하므로 복사본에서 탐색
+                        const reversedInputs = [...visibleInputs].reverse();
+                        const revCurrentIndex = reversedInputs.indexOf(target);
+                        targetInput = reversedInputs.find((input, idx) => {
+                            return parseInt(input.getAttribute('data-day-index')) === daysInMonth &&
+                                   idx > revCurrentIndex;
                         });
-                        visibleInputs.reverse(); 
-                        if (prevRowLastInput) targetInput = prevRowLastInput;
                     } else {
                         targetInput = visibleInputs.find(input => {
                             return input.getAttribute('data-labor-id') === laborId && 
@@ -1855,7 +2076,113 @@
             });
         }
 
-        // 실시간 요약 통계 계산
+        // ─── 드래그 범위 출역 기입 모드 ───────────────────────────────
+        let dragRangeActive = false;      // 모드 ON/OFF
+        let isDragging = false;           // 현재 드래그 중 여부
+        let dragCells = new Set();        // 드래그로 덮인 셀 집합
+
+        function toggleDragRangeMode() {
+            dragRangeActive = !dragRangeActive;
+            const btn = document.getElementById('dragRangeBtn');
+            if (dragRangeActive) {
+                btn.classList.add('bg-orange-100', 'border-orange-400', 'text-orange-700');
+                document.getElementById('dragRangePanel').classList.remove('hidden');
+                updateDragLabels();
+            } else {
+                btn.classList.remove('bg-orange-100', 'border-orange-400', 'text-orange-700');
+                document.getElementById('dragRangePanel').classList.add('hidden');
+            }
+        }
+
+        function closeDragRangeModal() {
+            dragRangeActive = false;
+            isDragging = false;
+            dragCells.clear();
+            document.getElementById('dragRangeBtn').classList.remove('bg-orange-100','border-orange-400','text-orange-700');
+            document.getElementById('dragRangePanel').classList.add('hidden');
+            document.getElementById('dragRangeStatus').classList.add('hidden');
+            clearDragHighlight();
+        }
+
+        function getDragValue() {
+            return parseFloat((document.querySelector('input[name="dragValue"]:checked') || {}).value ?? 1);
+        }
+
+        // 라디오 선택에 따라 레이블 색상 갱신
+        function updateDragLabels() {
+            const val = getDragValue();
+            const map = { '1': 'dragLbl1', '0.5': 'dragLbl05', '0': 'dragLbl0' };
+            Object.entries(map).forEach(([v, id]) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (parseFloat(v) === val) {
+                    el.classList.add('bg-orange-100', 'border-orange-400', 'text-orange-700');
+                } else {
+                    el.classList.remove('bg-orange-100', 'border-orange-400', 'text-orange-700');
+                }
+            });
+        }
+
+        function clearDragHighlight() {
+            document.querySelectorAll('.drag-highlight').forEach(el => el.classList.remove('drag-highlight'));
+        }
+
+        // 드래그 이벤트를 attendance 셀에 위임
+        function setupDragRangeListeners() {
+            const tbody = document.getElementById('laborList');
+
+            tbody.addEventListener('mousedown', function(e) {
+                if (!dragRangeActive) return;
+                const input = e.target.closest('.attendance-cell-input');
+                if (!input) return;
+                e.preventDefault();
+                isDragging = true;
+                dragCells.clear();
+                clearDragHighlight();
+                dragCells.add(input);
+                input.classList.add('drag-highlight');
+                document.getElementById('dragRangeStatus').classList.remove('hidden');
+                document.getElementById('dragRangeCount').textContent = dragCells.size;
+            });
+
+            tbody.addEventListener('mouseover', function(e) {
+                if (!dragRangeActive || !isDragging) return;
+                const input = e.target.closest('.attendance-cell-input');
+                if (!input || dragCells.has(input)) return;
+                dragCells.add(input);
+                input.classList.add('drag-highlight');
+                document.getElementById('dragRangeCount').textContent = dragCells.size;
+            });
+
+            document.addEventListener('mouseup', function(e) {
+                if (!dragRangeActive || !isDragging) return;
+                isDragging = false;
+                if (dragCells.size === 0) return;
+
+                const val = getDragValue();
+                const proj = appState.projects[appState.currentProjectId];
+                if (!proj) return;
+
+                const count = dragCells.size; // size는 clear() 전에 저장
+                dragCells.forEach(input => {
+                    const laborId = input.getAttribute('data-labor-id');
+                    const day = parseInt(input.getAttribute('data-day-index'));
+                    const labor = proj.labors.find(l => l.id === laborId);
+                    if (labor) {
+                        labor.attendance[day] = val;
+                        labor.manualDays = null;
+                    }
+                });
+
+                saveToLocalStorage();
+                updateHeaderAndTable();
+                clearDragHighlight();
+                dragCells.clear();
+                document.getElementById('dragRangeStatus').classList.add('hidden');
+                showToast(`${count}칸에 출역값 ${val} 기입 완료`);
+            });
+        }
+        // ─────────────────────────────────────────────────────────────
         function calculateAndDisplaySummary(rows) {
             let totalCount = rows.length;
             let totalWages = 0;
@@ -2002,8 +2329,57 @@
                 <head>
                     <meta charset="UTF-8">
                     <title>표준일용근로계약서 - ${labor.name}</title>
-                    <script src="https://cdn.tailwindcss.com"><\/script>
+                    
                     <style>
+                        /* === 인쇄 팝업 공용 스타일 (CDN 불필요, 오프라인 안전) === */
+                        *,::before,::after{box-sizing:border-box}
+                        .bg-white{background:#fff}.bg-slate-50{background:#f8fafc}.bg-slate-100{background:#f1f5f9}
+                        .bg-blue-50{background:#eff6ff}.bg-emerald-50{background:#ecfdf5}.bg-purple-50{background:#faf5ff}
+                        .bg-teal-50{background:#f0fdfa}.bg-amber-50{background:#fffbeb}
+                        .text-white{color:#fff}.text-slate-800{color:#1e293b}.text-slate-700{color:#334155}
+                        .text-slate-600{color:#475569}.text-slate-500{color:#64748b}.text-slate-400{color:#94a3b8}
+                        .text-blue-600{color:#2563eb}.text-blue-700{color:#1d4ed8}.text-blue-800{color:#1e40af}.text-blue-900{color:#1e3a8a}
+                        .text-emerald-600{color:#059669}.text-emerald-700{color:#047857}.text-emerald-800{color:#065f46}
+                        .text-red-600{color:#dc2626}.text-teal-700{color:#0f766e}.text-amber-800{color:#92400e}
+                        .border{border:1px solid #e2e8f0}.border-slate-200{border-color:#e2e8f0}.border-slate-300{border-color:#cbd5e1}
+                        .border-slate-400{border-color:#94a3b8}.border-black{border-color:#000}
+                        .border-blue-200{border-color:#bfdbfe}.border-emerald-200{border-color:#a7f3d0}
+                        .border-b{border-bottom:1px solid #e2e8f0}.border-t{border-top:1px solid #e2e8f0}
+                        .border-b-2{border-bottom:2px solid #000}.border-2{border:2px solid #000}
+                        .rounded{border-radius:.25rem}.rounded-lg{border-radius:.5rem}
+                        .shadow-md{box-shadow:0 4px 6px -1px rgba(0,0,0,.1)}
+                        .p-1{padding:.25rem}.p-2{padding:.5rem}.p-3{padding:.75rem}.p-4{padding:1rem}
+                        .p-6{padding:1.5rem}.p-8{padding:2rem}.p-12{padding:3rem}
+                        .px-3{padding-left:.75rem;padding-right:.75rem}.px-4{padding-left:1rem;padding-right:1rem}
+                        .py-1{padding-top:.25rem;padding-bottom:.25rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}
+                        .mb-1{margin-bottom:.25rem}.mb-2{margin-bottom:.5rem}.mb-4{margin-bottom:1rem}
+                        .mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.mt-1{margin-top:.25rem}
+                        .mt-2{margin-top:.5rem}.mt-4{margin-top:1rem}.mt-8{margin-top:2rem}.mt-12{margin-top:3rem}
+                        .mx-auto{margin-left:auto;margin-right:auto}
+                        .flex{display:flex}.grid{display:grid}.block{display:block}
+                        .flex-col{flex-direction:column}.items-center{align-items:center}
+                        .justify-between{justify-content:space-between}.justify-center{justify-content:center}
+                        .gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}.gap-8{gap:2rem}
+                        .space-y-1>*+*{margin-top:.25rem}.space-y-2>*+*{margin-top:.5rem}.space-y-3>*+*{margin-top:.75rem}
+                        .grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+                        .w-full{width:100%}.max-w-\[19cm\]{max-width:19cm}.max-w-\[21cm\]{max-width:21cm}
+                        .w-1\/4{width:25%}.w-1\/2{width:50%}
+                        .text-xs{font-size:.75rem}.text-sm{font-size:.875rem}.text-base{font-size:1rem}
+                        .text-xl{font-size:1.25rem}.text-2xl{font-size:1.5rem}
+                        .font-normal{font-weight:400}.font-semibold{font-weight:600}.font-bold{font-weight:700}
+                        .font-black{font-weight:900}.font-extrabold{font-weight:800}
+                        .font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+                        .text-center{text-align:center}.text-left{text-align:left}.text-right{text-align:right}
+                        .text-justify{text-align:justify}
+                        .tracking-widest{letter-spacing:.1em}.leading-relaxed{line-height:1.625}
+                        .underline{text-decoration:underline}
+                        .overflow-hidden{overflow:hidden}.border-collapse{border-collapse:collapse}
+                        .pt-2{padding-top:.5rem}.pt-4{padding-top:1rem}.pt-6{padding-top:1.5rem}
+                        .pb-2{padding-bottom:.5rem}.border-l-4{border-left-width:4px}
+                        .border-purple-600{border-color:#9333ea}.pl-2{padding-left:.5rem}
+                        button{cursor:pointer;font-family:inherit;font-weight:700;border-radius:.25rem;border:none;padding:.25rem .75rem;font-size:.75rem;transition:background .15s}
+                        table{border-collapse:collapse;width:100%}
+
                         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght=300;400;500;700;900&display=swap');
                         body { font-family: 'Noto Sans KR', sans-serif; }
                         @media print {
@@ -2112,8 +2488,57 @@
                 <head>
                     <meta charset="UTF-8">
                     <title>임금지급명세서 - ${labor.name}</title>
-                    <script src="https://cdn.tailwindcss.com"><\/script>
+                    
                     <style>
+                        /* === 인쇄 팝업 공용 스타일 (CDN 불필요, 오프라인 안전) === */
+                        *,::before,::after{box-sizing:border-box}
+                        .bg-white{background:#fff}.bg-slate-50{background:#f8fafc}.bg-slate-100{background:#f1f5f9}
+                        .bg-blue-50{background:#eff6ff}.bg-emerald-50{background:#ecfdf5}.bg-purple-50{background:#faf5ff}
+                        .bg-teal-50{background:#f0fdfa}.bg-amber-50{background:#fffbeb}
+                        .text-white{color:#fff}.text-slate-800{color:#1e293b}.text-slate-700{color:#334155}
+                        .text-slate-600{color:#475569}.text-slate-500{color:#64748b}.text-slate-400{color:#94a3b8}
+                        .text-blue-600{color:#2563eb}.text-blue-700{color:#1d4ed8}.text-blue-800{color:#1e40af}.text-blue-900{color:#1e3a8a}
+                        .text-emerald-600{color:#059669}.text-emerald-700{color:#047857}.text-emerald-800{color:#065f46}
+                        .text-red-600{color:#dc2626}.text-teal-700{color:#0f766e}.text-amber-800{color:#92400e}
+                        .border{border:1px solid #e2e8f0}.border-slate-200{border-color:#e2e8f0}.border-slate-300{border-color:#cbd5e1}
+                        .border-slate-400{border-color:#94a3b8}.border-black{border-color:#000}
+                        .border-blue-200{border-color:#bfdbfe}.border-emerald-200{border-color:#a7f3d0}
+                        .border-b{border-bottom:1px solid #e2e8f0}.border-t{border-top:1px solid #e2e8f0}
+                        .border-b-2{border-bottom:2px solid #000}.border-2{border:2px solid #000}
+                        .rounded{border-radius:.25rem}.rounded-lg{border-radius:.5rem}
+                        .shadow-md{box-shadow:0 4px 6px -1px rgba(0,0,0,.1)}
+                        .p-1{padding:.25rem}.p-2{padding:.5rem}.p-3{padding:.75rem}.p-4{padding:1rem}
+                        .p-6{padding:1.5rem}.p-8{padding:2rem}.p-12{padding:3rem}
+                        .px-3{padding-left:.75rem;padding-right:.75rem}.px-4{padding-left:1rem;padding-right:1rem}
+                        .py-1{padding-top:.25rem;padding-bottom:.25rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}
+                        .mb-1{margin-bottom:.25rem}.mb-2{margin-bottom:.5rem}.mb-4{margin-bottom:1rem}
+                        .mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.mt-1{margin-top:.25rem}
+                        .mt-2{margin-top:.5rem}.mt-4{margin-top:1rem}.mt-8{margin-top:2rem}.mt-12{margin-top:3rem}
+                        .mx-auto{margin-left:auto;margin-right:auto}
+                        .flex{display:flex}.grid{display:grid}.block{display:block}
+                        .flex-col{flex-direction:column}.items-center{align-items:center}
+                        .justify-between{justify-content:space-between}.justify-center{justify-content:center}
+                        .gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}.gap-8{gap:2rem}
+                        .space-y-1>*+*{margin-top:.25rem}.space-y-2>*+*{margin-top:.5rem}.space-y-3>*+*{margin-top:.75rem}
+                        .grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+                        .w-full{width:100%}.max-w-\[19cm\]{max-width:19cm}.max-w-\[21cm\]{max-width:21cm}
+                        .w-1\/4{width:25%}.w-1\/2{width:50%}
+                        .text-xs{font-size:.75rem}.text-sm{font-size:.875rem}.text-base{font-size:1rem}
+                        .text-xl{font-size:1.25rem}.text-2xl{font-size:1.5rem}
+                        .font-normal{font-weight:400}.font-semibold{font-weight:600}.font-bold{font-weight:700}
+                        .font-black{font-weight:900}.font-extrabold{font-weight:800}
+                        .font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+                        .text-center{text-align:center}.text-left{text-align:left}.text-right{text-align:right}
+                        .text-justify{text-align:justify}
+                        .tracking-widest{letter-spacing:.1em}.leading-relaxed{line-height:1.625}
+                        .underline{text-decoration:underline}
+                        .overflow-hidden{overflow:hidden}.border-collapse{border-collapse:collapse}
+                        .pt-2{padding-top:.5rem}.pt-4{padding-top:1rem}.pt-6{padding-top:1.5rem}
+                        .pb-2{padding-bottom:.5rem}.border-l-4{border-left-width:4px}
+                        .border-purple-600{border-color:#9333ea}.pl-2{padding-left:.5rem}
+                        button{cursor:pointer;font-family:inherit;font-weight:700;border-radius:.25rem;border:none;padding:.25rem .75rem;font-size:.75rem;transition:background .15s}
+                        table{border-collapse:collapse;width:100%}
+
                         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght=300;400;500;700;900&display=swap');
                         body { font-family: 'Noto Sans KR', sans-serif; }
                         @media print {
@@ -2224,8 +2649,57 @@
                 <head>
                     <meta charset="UTF-8">
                     <title>신규채용자 안전교육 이수증 - ${labor.name}</title>
-                    <script src="https://cdn.tailwindcss.com"><\/script>
+                    
                     <style>
+                        /* === 인쇄 팝업 공용 스타일 (CDN 불필요, 오프라인 안전) === */
+                        *,::before,::after{box-sizing:border-box}
+                        .bg-white{background:#fff}.bg-slate-50{background:#f8fafc}.bg-slate-100{background:#f1f5f9}
+                        .bg-blue-50{background:#eff6ff}.bg-emerald-50{background:#ecfdf5}.bg-purple-50{background:#faf5ff}
+                        .bg-teal-50{background:#f0fdfa}.bg-amber-50{background:#fffbeb}
+                        .text-white{color:#fff}.text-slate-800{color:#1e293b}.text-slate-700{color:#334155}
+                        .text-slate-600{color:#475569}.text-slate-500{color:#64748b}.text-slate-400{color:#94a3b8}
+                        .text-blue-600{color:#2563eb}.text-blue-700{color:#1d4ed8}.text-blue-800{color:#1e40af}.text-blue-900{color:#1e3a8a}
+                        .text-emerald-600{color:#059669}.text-emerald-700{color:#047857}.text-emerald-800{color:#065f46}
+                        .text-red-600{color:#dc2626}.text-teal-700{color:#0f766e}.text-amber-800{color:#92400e}
+                        .border{border:1px solid #e2e8f0}.border-slate-200{border-color:#e2e8f0}.border-slate-300{border-color:#cbd5e1}
+                        .border-slate-400{border-color:#94a3b8}.border-black{border-color:#000}
+                        .border-blue-200{border-color:#bfdbfe}.border-emerald-200{border-color:#a7f3d0}
+                        .border-b{border-bottom:1px solid #e2e8f0}.border-t{border-top:1px solid #e2e8f0}
+                        .border-b-2{border-bottom:2px solid #000}.border-2{border:2px solid #000}
+                        .rounded{border-radius:.25rem}.rounded-lg{border-radius:.5rem}
+                        .shadow-md{box-shadow:0 4px 6px -1px rgba(0,0,0,.1)}
+                        .p-1{padding:.25rem}.p-2{padding:.5rem}.p-3{padding:.75rem}.p-4{padding:1rem}
+                        .p-6{padding:1.5rem}.p-8{padding:2rem}.p-12{padding:3rem}
+                        .px-3{padding-left:.75rem;padding-right:.75rem}.px-4{padding-left:1rem;padding-right:1rem}
+                        .py-1{padding-top:.25rem;padding-bottom:.25rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}
+                        .mb-1{margin-bottom:.25rem}.mb-2{margin-bottom:.5rem}.mb-4{margin-bottom:1rem}
+                        .mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.mt-1{margin-top:.25rem}
+                        .mt-2{margin-top:.5rem}.mt-4{margin-top:1rem}.mt-8{margin-top:2rem}.mt-12{margin-top:3rem}
+                        .mx-auto{margin-left:auto;margin-right:auto}
+                        .flex{display:flex}.grid{display:grid}.block{display:block}
+                        .flex-col{flex-direction:column}.items-center{align-items:center}
+                        .justify-between{justify-content:space-between}.justify-center{justify-content:center}
+                        .gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}.gap-8{gap:2rem}
+                        .space-y-1>*+*{margin-top:.25rem}.space-y-2>*+*{margin-top:.5rem}.space-y-3>*+*{margin-top:.75rem}
+                        .grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+                        .w-full{width:100%}.max-w-\[19cm\]{max-width:19cm}.max-w-\[21cm\]{max-width:21cm}
+                        .w-1\/4{width:25%}.w-1\/2{width:50%}
+                        .text-xs{font-size:.75rem}.text-sm{font-size:.875rem}.text-base{font-size:1rem}
+                        .text-xl{font-size:1.25rem}.text-2xl{font-size:1.5rem}
+                        .font-normal{font-weight:400}.font-semibold{font-weight:600}.font-bold{font-weight:700}
+                        .font-black{font-weight:900}.font-extrabold{font-weight:800}
+                        .font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+                        .text-center{text-align:center}.text-left{text-align:left}.text-right{text-align:right}
+                        .text-justify{text-align:justify}
+                        .tracking-widest{letter-spacing:.1em}.leading-relaxed{line-height:1.625}
+                        .underline{text-decoration:underline}
+                        .overflow-hidden{overflow:hidden}.border-collapse{border-collapse:collapse}
+                        .pt-2{padding-top:.5rem}.pt-4{padding-top:1rem}.pt-6{padding-top:1.5rem}
+                        .pb-2{padding-bottom:.5rem}.border-l-4{border-left-width:4px}
+                        .border-purple-600{border-color:#9333ea}.pl-2{padding-left:.5rem}
+                        button{cursor:pointer;font-family:inherit;font-weight:700;border-radius:.25rem;border:none;padding:.25rem .75rem;font-size:.75rem;transition:background .15s}
+                        table{border-collapse:collapse;width:100%}
+
                         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght=300;400;500;700;900&display=swap');
                         body { font-family: 'Noto Sans KR', sans-serif; }
                         @media print {
@@ -2348,7 +2822,7 @@
             }
 
             const newLabor = {
-                id: "l_" + Date.now(),
+                id: "l_" + (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '_' + Math.random().toString(36).substr(2, 9)),
                 name,
                 job,
                 ssn,
@@ -2582,37 +3056,135 @@
                 return;
             }
 
-            const priceInput = prompt("일괄 적용할 새로운 단가를 숫자만 입력해 주세요. (예: 180000)", "180000");
-            if (priceInput === null) return;
+            // 인라인 입력창을 포함한 커스텀 확인 모달 사용
+            const modal = document.getElementById('customAlertModal');
+            const msgEl = document.getElementById('alertMessage');
+            const confirmBtn = document.getElementById('alertConfirmBtn');
+            const cancelBtn = document.getElementById('alertCancelBtn');
 
-            const cleanPrice = parseInt(priceInput.replace(/[^0-9]/g, ''));
-            if (isNaN(cleanPrice) || cleanPrice < 0) {
-                showCustomAlert("올바른 수치를 기재해 주십시오.");
-                return;
-            }
+            msgEl.innerHTML = `일괄 적용할 새로운 단가를 입력해 주세요.<br>
+                <input type="text" id="bulkPriceInput" value="180,000"
+                    class="mt-2 w-full border border-slate-300 rounded p-2 font-mono text-sm focus:ring-1 focus:ring-blue-500 outline-none"
+                    placeholder="예: 180000">`;
+            cancelBtn.classList.remove('hidden');
+            modal.classList.remove('hidden');
 
-            showCustomConfirm(`현재 검색/표시된 모든 대상의 단가를 일당 [${cleanPrice.toLocaleString()}원]으로 강제 변동시키겠습니까?`, () => {
-                const searchKeyword = document.getElementById('searchFilter').value.trim().toLowerCase();
-                proj.labors.forEach(l => {
-                    const nameMatch = l.name.toLowerCase().includes(searchKeyword);
-                    const jobMatch = (l.job || '').toLowerCase().includes(searchKeyword);
-                    if (nameMatch || jobMatch) {
-                        l.price = cleanPrice;
-                    }
+            // 입력 필드에 콤마 포맷터 적용
+            setTimeout(() => {
+                const inp = document.getElementById('bulkPriceInput');
+                if (inp) {
+                    inp.addEventListener('input', function(e) {
+                        let clean = e.target.value.replace(/[^0-9]/g, '');
+                        e.target.value = clean ? parseInt(clean).toLocaleString() : '';
+                    });
+                    inp.focus();
+                    inp.select();
+                }
+            }, 50);
+
+            const handleConfirm = () => {
+                cleanup();
+                const inp = document.getElementById('bulkPriceInput');
+                const cleanPrice = parseInt((inp ? inp.value : '').replace(/[^0-9]/g, ''));
+                if (isNaN(cleanPrice) || cleanPrice < 0) {
+                    showCustomAlert("올바른 수치를 기재해 주십시오.");
+                    return;
+                }
+                showCustomConfirm(`현재 검색/표시된 모든 대상의 단가를 일당 [${cleanPrice.toLocaleString()}원]으로 강제 변동시키겠습니까?`, () => {
+                    const searchKeyword = document.getElementById('searchFilter').value.trim().toLowerCase();
+                    proj.labors.forEach(l => {
+                        const nameMatch = l.name.toLowerCase().includes(searchKeyword);
+                        const jobMatch = (l.job || '').toLowerCase().includes(searchKeyword);
+                        if (nameMatch || jobMatch) {
+                            l.price = cleanPrice;
+                        }
+                    });
+                    saveToLocalStorage();
+                    updateHeaderAndTable();
+                    showToast("대상자 단가가 일괄 적용 완료되었습니다.");
                 });
-                saveToLocalStorage();
-                updateHeaderAndTable();
-                showToast("대상자 단자가 일괄 적용 완료되었습니다.");
-            });
+            };
+            const handleCancel = () => { cleanup(); };
+            const cleanup = () => {
+                confirmBtn.removeEventListener('click', handleConfirm);
+                cancelBtn.removeEventListener('click', handleCancel);
+                modal.classList.add('hidden');
+            };
+            confirmBtn.addEventListener('click', handleConfirm);
+            cancelBtn.addEventListener('click', handleCancel);
         }
 
         // 근로자 복수 일괄 등록 모달 열기/닫기
         function openBulkUserModal() {
             document.getElementById('bulkUserModal').classList.remove('hidden');
+            updateBulkPlaceholder();
         }
 
         function closeBulkUserModal() {
             document.getElementById('bulkUserModal').classList.add('hidden');
+        }
+
+        // 입력 모드별 컬럼 헤더 및 placeholder 갱신
+        const BULK_MODES = {
+            name_only:          { cols: ['이름'],                                                        ph: '홍길동\n이순신\n장보고' },
+            name_ssn:           { cols: ['이름','주민번호'],                                              ph: '홍길동\t820512-1000000\n이순신\t750403-1000000' },
+            name_ssn_phone:     { cols: ['이름','주민번호','연락처'],                                     ph: '홍길동\t820512-1000000\t010-1234-5678\n이순신\t750403-1000000\t010-5555-6666' },
+            name_ssn_phone_addr:{ cols: ['이름','주민번호','연락처','주소'],                              ph: '홍길동\t820512-1000000\t010-1234-5678\t원주시 무실동 123\n이순신\t750403-1000000\t\t서울 종로구 1' },
+            full:               { cols: ['이름','주민번호','연락처','주소','계좌번호'],                    ph: '홍길동\t820512-1000000\t010-1234-5678\t원주시 무실동 123\t110-384-592812\n이순신\t750403-1000000\t010-5555-6666\t\t352-1234-5678' },
+        };
+
+        function getBulkMode() {
+            return (document.querySelector('input[name="bulkMode"]:checked') || {}).value || 'name_only';
+        }
+
+        function updateBulkPlaceholder() {
+            const mode = getBulkMode();
+            const cfg = BULK_MODES[mode];
+            const ta = document.getElementById('bulkNames');
+            ta.placeholder = cfg.ph;
+            document.getElementById('bulkColumnHeader').textContent = '열 순서: ' + cfg.cols.map((c,i) => `[${i+1}] ${c}`).join('  →  ') + '  (열 구분: Tab 또는 콤마)';
+            renderBulkPreview();
+        }
+
+        // 텍스트를 파싱하여 미리보기 테이블 갱신
+        function parseBulkLines() {
+            const mode = getBulkMode();
+            const raw = document.getElementById('bulkNames').value;
+            const lines = raw.split('\n').map(l => l.trim()).filter(l => l !== '');
+            return lines.map(line => {
+                // Tab 우선, 없으면 콤마로 분리
+                const sep = line.includes('\t') ? '\t' : ',';
+                const parts = line.split(sep).map(p => p.trim());
+                const r = { name: parts[0] || '', ssn: '', phone: '', address: '', account: '' };
+                if (mode === 'name_ssn' || mode === 'name_ssn_phone' || mode === 'name_ssn_phone_addr' || mode === 'full') r.ssn = parts[1] || '';
+                if (mode === 'name_ssn_phone' || mode === 'name_ssn_phone_addr' || mode === 'full') r.phone = parts[2] || '';
+                if (mode === 'name_ssn_phone_addr' || mode === 'full') r.address = parts[3] || '';
+                if (mode === 'full') r.account = parts[4] || '';
+                return r;
+            }).filter(r => r.name);
+        }
+
+        function renderBulkPreview() {
+            const rows = parseBulkLines();
+            const area = document.getElementById('bulkPreviewArea');
+            if (rows.length === 0) { area.classList.add('hidden'); return; }
+            area.classList.remove('hidden');
+            document.getElementById('bulkPreviewCount').textContent = `${rows.length}명`;
+
+            const mode = getBulkMode();
+            const cols = BULK_MODES[mode].cols;
+            const head = document.getElementById('bulkPreviewHead');
+            head.innerHTML = cols.map(c => `<th class="p-1.5 border-r border-slate-300 px-2 font-bold">${c}</th>`).join('');
+
+            const body = document.getElementById('bulkPreviewBody');
+            body.innerHTML = rows.map((r, i) => {
+                const cells = [r.name];
+                if (cols.includes('주민번호')) cells.push(r.ssn || '<span class="text-amber-500">임시생성</span>');
+                if (cols.includes('연락처'))  cells.push(r.phone || '-');
+                if (cols.includes('주소'))    cells.push(r.address || '-');
+                if (cols.includes('계좌번호')) cells.push(r.account || '-');
+                return `<tr class="${i%2?'bg-slate-50':'bg-white'}">` + cells.map(c=>`<td class="p-1.5 border-r border-slate-200 px-2">${c}</td>`).join('') + '</tr>';
+            }).join('');
         }
 
         // 근로자 복수 기입 및 일괄 저장 처리
@@ -2620,63 +3192,68 @@
             const proj = appState.projects[appState.currentProjectId];
             if (!proj) return;
 
-            const bulkNamesVal = document.getElementById('bulkNames').value.trim();
-            const job = document.getElementById('bulkJob').value.trim() || '보통인부';
-            const priceRaw = document.getElementById('bulkPrice').value;
-            const price = parseInt(priceRaw.replace(/[^0-9]/g, ''));
-
-            if (!bulkNamesVal) {
-                showCustomAlert("등록할 이름을 한 명 이상 기재해 주세요.");
-                return;
-            }
+            const job   = document.getElementById('bulkJob').value.trim() || '보통인부';
+            const price = parseInt(document.getElementById('bulkPrice').value.replace(/[^0-9]/g, ''));
+            const bank  = document.getElementById('bulkBank').value.trim();
 
             if (isNaN(price) || price < 0) {
                 showCustomAlert("올바른 단가 수치를 기입해 주세요.");
                 return;
             }
 
-            const namesArray = bulkNamesVal.split(/[\n,]+/).map(n => n.trim()).filter(n => n !== "");
-
-            if (namesArray.length === 0) {
-                showCustomAlert("등록할 올바른 성명이 식별되지 않았습니다.");
+            const rows = parseBulkLines();
+            if (rows.length === 0) {
+                showCustomAlert("등록할 이름을 한 명 이상 기재해 주세요.");
                 return;
             }
 
-            namesArray.forEach((name, i) => {
-                const dummySsnFirst = String(Math.floor(Math.random() * 20) + 75).padStart(2, '0') + 
-                                     String(Math.floor(Math.random() * 12) + 1).padStart(2, '0') + 
-                                     String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
-                const dummySsnSecond = String(Math.floor(Math.random() * 2) + 1) + "000000";
-                const mockSsn = `${dummySsnFirst}-${dummySsnSecond}`; 
+            let added = 0, skipped = 0;
+            rows.forEach((r, i) => {
+                const name = r.name;
+                // 주민번호: 입력값 정제 후 길이 확인, 미입력이면 임시 생성
+                let ssn = r.ssn.replace(/[^0-9\-]/g, '');
+                const ssnDigits = ssn.replace(/[^0-9]/g, '');
+                if (ssnDigits.length !== 13) {
+                    const f = String(Math.floor(Math.random()*20)+75).padStart(2,'0')
+                            + String(Math.floor(Math.random()*12)+1).padStart(2,'0')
+                            + String(Math.floor(Math.random()*28)+1).padStart(2,'0');
+                    ssn = f + '-' + (Math.floor(Math.random()*2)+1) + '000000';
+                } else if (!ssn.includes('-')) {
+                    ssn = ssn.slice(0,6) + '-' + ssn.slice(6);
+                }
+
+                // 중복 체크 (이름 + 주민번호)
+                const isDuplicate = proj.labors.some(l => l.name === name && l.ssn === ssn);
+                if (isDuplicate) { skipped++; return; }
 
                 const newLabor = {
-                    id: "l_bulk_" + (Date.now() + i),
-                    name,
-                    job,
-                    ssn: mockSsn,
-                    phone: "010-0000-0000",
-                    bank: "농협은행",
-                    account: "",
+                    id: 'l_bulk_' + (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '_' + i + '_' + Math.random().toString(36).substr(2, 9)),
+                    name, job, ssn,
+                    phone:   phoneHyphenFilter(r.phone.replace(/[^0-9]/g,'')),
+                    bank:    bank || '',
+                    account: r.account || '',
                     safetyEdu: false,
-                    address: "",
+                    address: r.address || '',
                     price,
-                    visa: "대한민국",
+                    visa: '대한민국',
                     manualDays: null,
                     attendance: {}
                 };
-
-                for (let d = 1; d <= 31; d++) {
-                    newLabor.attendance[d] = 0;
-                }
-
+                for (let d = 1; d <= 31; d++) newLabor.attendance[d] = 0;
                 proj.labors.push(newLabor);
+                added++;
             });
 
             saveToLocalStorage();
             updateHeaderAndTable();
             closeBulkUserModal();
-            document.getElementById('bulkNames').value = ""; 
-            showToast(`${namesArray.length}명의 근로자가 대장에 추가되었습니다.`);
+            document.getElementById('bulkNames').value = '';
+
+            const hasDummy = rows.some(r => r.ssn.replace(/[^0-9]/g,'').length !== 13);
+            let msg = `${added}명 등록 완료`;
+            if (skipped > 0) msg += ` (${skipped}명 중복 제외)`;
+            if (hasDummy) msg += ' — ⚠️ 주민번호 미입력 항목은 임시 번호가 생성되었습니다. 이름 클릭 후 수정해 주세요.';
+            showToast(msg);
         }
 
         // 2026 사회보험료 및 원천공제 세액 계산기 (나이 및 일별 소액부징수 기준 고도화 적용)
@@ -3193,37 +3770,35 @@
                 return;
             }
 
-            let csv = "\uFEFF"; 
+            const daysInMonth = new Date(proj.year, proj.month, 0).getDate();
+            let csv = "\uFEFF";
             csv += `상호명,${proj.company},지급귀속,${proj.year}년 ${proj.month}월,공종분류,${proj.workType}\n\n`;
-            csv += "NO,성명,주민번호,연락처,직종,은행명,계좌번호,";
-            for (let d = 1; d <= 31; d++) {
-                csv += `${d}일,`;
-            }
-            csv += "실제근무일수,지급단가,총액,소득세(갑근세),지방세(주민세),고용보험,건강보험,장기요양,국민연금,공제총합,차인지급실수령액\n";
+            csv += "NO,직종,성명,주소,주민번호,";
+            for (let d = 1; d <= daysInMonth; d++) { csv += `${d}일,`; }
+            csv += "일수,단가,총액,기타(실수령),은행명,계좌번호\n";
 
             proj.labors.forEach((l, idx) => {
                 let autoDays = 0;
                 let attStr = "";
-                for (let d = 1; d <= 31; d++) {
+                for (let d = 1; d <= daysInMonth; d++) {
                     const active = l.attendance[d] || 0;
-                    autoDays += active;
+                    autoDays += Number(active);
                     attStr += `${active ? active : ''},`;
                 }
-
                 const calc = calculateDeductions(l, autoDays);
-
-                csv += `${idx + 1},${l.name},'${l.ssn},'${l.phone || ''},${l.job || '보통인부'},${l.bank || ''},'${l.account || ''},${attStr}${calc.effectiveDays},${l.price},${calc.totalWages},${calc.incomeTax},${calc.localTax},${calc.employment},${calc.health},${calc.care},${calc.pension},${calc.totalDeduction},${calc.netPay}\n`;
+                const addr = '"' + (l.address || '').replace(/"/g, '""') + '"';
+                csv += `${idx + 1},${l.job || '보통인부'},${l.name},${addr},'${l.ssn},${attStr}${calc.effectiveDays},${l.price},${calc.totalWages},${calc.netPay},${l.bank || ''},'${l.account || ''}\n`;
             });
 
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.href = url;
-            link.setAttribute("download", `2026_노무대장_${proj.company}_${proj.year}년_${proj.month}월.csv`);
+            link.setAttribute("download", `노무대장_${proj.company}_${proj.year}년_${proj.month}월.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            showToast("성공적으로 CSV 파일이 다운로드되었습니다.");
+            showToast("CSV 다운로드 완료 (직종→이름→주소→주민번호→출근일자→일수→단가→총액→기타→은행→계좌)");
         }
 
         // 전체 데이터 백업 및 복구
@@ -3248,17 +3823,25 @@
             reader.onload = function(e) {
                 try {
                     const parsed = JSON.parse(e.target.result);
-                    if (parsed.projects && parsed.currentProjectId) {
-                        appState = parsed;
-                        saveToLocalStorage();
-                        populateDropdowns();
-                        onProjectChange();
-                        showToast("백업 데이터 파일이 전체 복구 처리되었습니다.");
-                    } else {
-                        showCustomAlert("지정하신 파일은 복구 규격 포맷이 아닙니다.");
+                    // 구조 유효성 검사
+                    if (!parsed || typeof parsed !== 'object') throw new Error('객체 형식 오류');
+                    if (typeof parsed.projects !== 'object' || parsed.projects === null) throw new Error('projects 필드 오류');
+                    if (typeof parsed.currentProjectId !== 'string') throw new Error('currentProjectId 필드 오류');
+                    // 프로젝트 각 항목 기본 검증
+                    for (const [pid, proj] of Object.entries(parsed.projects)) {
+                        if (typeof proj !== 'object' || proj === null) throw new Error(`프로젝트 [${pid}] 형식 오류`);
+                        if (typeof proj.company !== 'string') throw new Error(`프로젝트 [${pid}] company 필드 오류`);
+                        if (!Array.isArray(proj.labors)) throw new Error(`프로젝트 [${pid}] labors 필드 오류`);
                     }
+                    appState = parsed;
+                    saveToLocalStorage();
+                    populateDropdowns();
+                    onProjectChange();
+                    showToast("백업 데이터 파일이 전체 복구 처리되었습니다.");
                 } catch (err) {
-                    showCustomAlert("데이터 변환 분석 중 유효하지 않은 에러가 감지되었습니다.");
+                    showCustomAlert("복구 실패: " + (err.message || "유효하지 않은 백업 파일입니다."));
+                    // 복구 실패 시 파일 입력 초기화
+                    event.target.value = '';
                 }
             };
             reader.readAsText(file);
@@ -3387,8 +3970,57 @@
                 <!DOCTYPE html><html lang="ko"><head>
                 <meta charset="UTF-8">
                 <title>4대보험 취득신고서 - ${proj.company} ${proj.year}년 ${proj.month}월</title>
-                <script src="https://cdn.tailwindcss.com"><\/script>
+                
                 <style>
+                        /* === 인쇄 팝업 공용 스타일 (CDN 불필요, 오프라인 안전) === */
+                        *,::before,::after{box-sizing:border-box}
+                        .bg-white{background:#fff}.bg-slate-50{background:#f8fafc}.bg-slate-100{background:#f1f5f9}
+                        .bg-blue-50{background:#eff6ff}.bg-emerald-50{background:#ecfdf5}.bg-purple-50{background:#faf5ff}
+                        .bg-teal-50{background:#f0fdfa}.bg-amber-50{background:#fffbeb}
+                        .text-white{color:#fff}.text-slate-800{color:#1e293b}.text-slate-700{color:#334155}
+                        .text-slate-600{color:#475569}.text-slate-500{color:#64748b}.text-slate-400{color:#94a3b8}
+                        .text-blue-600{color:#2563eb}.text-blue-700{color:#1d4ed8}.text-blue-800{color:#1e40af}.text-blue-900{color:#1e3a8a}
+                        .text-emerald-600{color:#059669}.text-emerald-700{color:#047857}.text-emerald-800{color:#065f46}
+                        .text-red-600{color:#dc2626}.text-teal-700{color:#0f766e}.text-amber-800{color:#92400e}
+                        .border{border:1px solid #e2e8f0}.border-slate-200{border-color:#e2e8f0}.border-slate-300{border-color:#cbd5e1}
+                        .border-slate-400{border-color:#94a3b8}.border-black{border-color:#000}
+                        .border-blue-200{border-color:#bfdbfe}.border-emerald-200{border-color:#a7f3d0}
+                        .border-b{border-bottom:1px solid #e2e8f0}.border-t{border-top:1px solid #e2e8f0}
+                        .border-b-2{border-bottom:2px solid #000}.border-2{border:2px solid #000}
+                        .rounded{border-radius:.25rem}.rounded-lg{border-radius:.5rem}
+                        .shadow-md{box-shadow:0 4px 6px -1px rgba(0,0,0,.1)}
+                        .p-1{padding:.25rem}.p-2{padding:.5rem}.p-3{padding:.75rem}.p-4{padding:1rem}
+                        .p-6{padding:1.5rem}.p-8{padding:2rem}.p-12{padding:3rem}
+                        .px-3{padding-left:.75rem;padding-right:.75rem}.px-4{padding-left:1rem;padding-right:1rem}
+                        .py-1{padding-top:.25rem;padding-bottom:.25rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}
+                        .mb-1{margin-bottom:.25rem}.mb-2{margin-bottom:.5rem}.mb-4{margin-bottom:1rem}
+                        .mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.mt-1{margin-top:.25rem}
+                        .mt-2{margin-top:.5rem}.mt-4{margin-top:1rem}.mt-8{margin-top:2rem}.mt-12{margin-top:3rem}
+                        .mx-auto{margin-left:auto;margin-right:auto}
+                        .flex{display:flex}.grid{display:grid}.block{display:block}
+                        .flex-col{flex-direction:column}.items-center{align-items:center}
+                        .justify-between{justify-content:space-between}.justify-center{justify-content:center}
+                        .gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}.gap-8{gap:2rem}
+                        .space-y-1>*+*{margin-top:.25rem}.space-y-2>*+*{margin-top:.5rem}.space-y-3>*+*{margin-top:.75rem}
+                        .grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+                        .w-full{width:100%}.max-w-\[19cm\]{max-width:19cm}.max-w-\[21cm\]{max-width:21cm}
+                        .w-1\/4{width:25%}.w-1\/2{width:50%}
+                        .text-xs{font-size:.75rem}.text-sm{font-size:.875rem}.text-base{font-size:1rem}
+                        .text-xl{font-size:1.25rem}.text-2xl{font-size:1.5rem}
+                        .font-normal{font-weight:400}.font-semibold{font-weight:600}.font-bold{font-weight:700}
+                        .font-black{font-weight:900}.font-extrabold{font-weight:800}
+                        .font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+                        .text-center{text-align:center}.text-left{text-align:left}.text-right{text-align:right}
+                        .text-justify{text-align:justify}
+                        .tracking-widest{letter-spacing:.1em}.leading-relaxed{line-height:1.625}
+                        .underline{text-decoration:underline}
+                        .overflow-hidden{overflow:hidden}.border-collapse{border-collapse:collapse}
+                        .pt-2{padding-top:.5rem}.pt-4{padding-top:1rem}.pt-6{padding-top:1.5rem}
+                        .pb-2{padding-bottom:.5rem}.border-l-4{border-left-width:4px}
+                        .border-purple-600{border-color:#9333ea}.pl-2{padding-left:.5rem}
+                        button{cursor:pointer;font-family:inherit;font-weight:700;border-radius:.25rem;border:none;padding:.25rem .75rem;font-size:.75rem;transition:background .15s}
+                        table{border-collapse:collapse;width:100%}
+
                     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght=400;700;900&display=swap');
                     body { font-family: 'Noto Sans KR', sans-serif; }
                     @media print { .no-print{display:none!important} @page{size:A4 landscape;margin:1cm} }
@@ -3499,8 +4131,8 @@
             document.getElementById('aiResultEditArea').classList.add('hidden');
             document.getElementById('aiFileInput').value = '';
             document.getElementById('aiExtraInstruction').value = '';
-            // 저장된 API 키 불러오기
-            const savedKey = localStorage.getItem('gemini_api_key') || '';
+            // 저장된 API 키 불러오기 (세션 스토리지: 탭 종료 시 자동 삭제)
+            const savedKey = sessionStorage.getItem('gemini_api_key') || '';
             document.getElementById('geminiApiKey').value = savedKey;
             lucide.createIcons();
         }
@@ -3586,8 +4218,8 @@
                 return;
             }
 
-            // API 키 저장
-            localStorage.setItem('gemini_api_key', apiKey);
+            // API 키 저장 (세션 스토리지 사용 — 탭 닫으면 자동 만료)
+            sessionStorage.setItem('gemini_api_key', apiKey);
 
             document.getElementById('aiLoadingArea').classList.remove('hidden');
             document.getElementById('aiResultArea').classList.add('hidden');
@@ -3638,7 +4270,7 @@ ${extraInstruction ? '\n추가 지시사항: ' + extraInstruction : ''}
 
 JSON 배열만 응답. 설명 없이.`;
 
-                // Gemini API 호출 (gemini-1.5-flash)
+                // Gemini API 호출 (gemini-2.5-flash-preview-05-20)
                 const response = await fetch(
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`,
                     {
@@ -3767,7 +4399,7 @@ JSON 배열만 응답. 설명 없이.`;
                 if (isDuplicate) { skipped++; return; }
 
                 const newLabor = {
-                    id: 'l_ai_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                    id: 'l_ai_' + (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '_' + Math.random().toString(36).substr(2, 9)),
                     name, job: p.job || '보통인부', ssn,
                     phone: p.phone || '', bank: p.bank || '',
                     account: p.account || '', safetyEdu: false,
