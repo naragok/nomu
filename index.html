@@ -38,25 +38,52 @@
         }
         /* 인쇄 전용 CSS */
         @media print {
-            .no-print {
-                display: none !important;
-            }
-            body {
-                background: white;
-                color: black;
-            }
+            .no-print { display: none !important; }
+            body { background: white; color: black; }
             .print-container {
-                width: 100% !important;
-                max-width: 100% !important;
-                padding: 0 !important;
-                margin: 0 !important;
+                width: 100% !important; max-width: 100% !important;
+                padding: 0 !important; margin: 0 !important;
                 box-shadow: none !important;
             }
-            @page {
-                size: A4 landscape;
-                margin: 0.3cm;
+            /* 화면 테이블 숨기고 인쇄 전용 테이블만 표시 */
+            #paymentTable { display: none !important; }
+            #printTable { display: table !important; }
+            @page { size: A4 landscape; margin: 5mm 4mm; }
+
+            #printTable {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 7.5px;
+                table-layout: fixed;
             }
+            #printTable th, #printTable td {
+                border: 0.3px solid #374151;
+                text-align: center;
+                vertical-align: middle;
+                padding: 1px 0;
+                word-break: keep-all;
+                overflow: hidden;
+            }
+            #printTable .pt-name  { width: 14mm; font-weight: 900; }
+            #printTable .pt-ssn   { width: 20mm; font-family: monospace; font-size: 6.5px; }
+            #printTable .pt-job   { width: 10mm; }
+            #printTable .pt-day   { width: 5.4mm; }
+            #printTable .pt-days  { width: 7mm; font-weight: 900; }
+            #printTable .pt-price { width: 12mm; font-weight: 900; }
+            #printTable .pt-total { width: 15mm; font-weight: 900; }
+            #printTable .pt-tax   { width: 13mm; }
+            #printTable .pt-ins   { width: 10mm; }
+            #printTable .pt-deduct{ width: 13mm; font-weight: 900; }
+            #printTable .pt-net   { width: 15mm; font-weight: 900; }
+            #printTable .pt-no    { width: 6mm; }
+            #printTable .sun { color: #dc2626; background: #fff5f5; }
+            #printTable .sat { color: #1d4ed8; background: #eff6ff; }
+            #printTable .hdr { background: #e2e8f0; font-weight: 700; }
+            #printTable .total-row { background: #dbeafe; font-weight: 900; }
+            #printTable .empty-day { background: #f1f5f9; }
         }
+        /* 화면에서는 인쇄 테이블 숨김 */
+        #printTable { display: none; }
         /* 드래그 범위 선택 하이라이트 */
         .drag-highlight {
             background-color: #fed7aa !important;
@@ -82,8 +109,11 @@
             <button onclick="copyToClipboardForExcel()" class="bg-slate-700 hover:bg-slate-800 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="엑셀에 바로 붙여넣기 가능한 규격으로 복사합니다.">
                 <i data-lucide="clipboard-copy" class="w-3.5 h-3.5"></i> 엑셀용 복사
             </button>
-            <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all">
-                <i data-lucide="file-down" class="w-3.5 h-3.5"></i> 엑셀(CSV)
+            <button onclick="exportToCSV()" class="bg-teal-600 hover:bg-teal-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all">
+                <i data-lucide="file-down" class="w-3.5 h-3.5"></i> CSV
+            </button>
+            <button onclick="exportToXLS()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all">
+                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> XLS 저장
             </button>
             <button onclick="triggerBackup()" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all">
                 <i data-lucide="database-backup" class="w-3.5 h-3.5"></i> 백업
@@ -382,6 +412,8 @@
                         </tr>
                     </tfoot>
                 </table>
+                <!-- 인쇄 전용 2행 날짜 테이블 (화면에서는 숨김, 인쇄 시에만 표시) -->
+                <table id="printTable"></table>
             </div>
         </main>
     </div>
@@ -1744,6 +1776,7 @@
 
             renderTotalRow(computedRowsData, daysInMonth);
             calculateAndDisplaySummary(computedRowsData);
+            renderPrintTable(proj, daysInMonth, targetLabors, computedRowsData);
             lucide.createIcons();
             
             applyZoom(document.getElementById('zoomSlider').value);
@@ -1884,39 +1917,159 @@
                 return;
             }
 
-            const daysInMonthForCopy = new Date(proj.year, proj.month, 0).getDate();
-            let tsv = "성명\t주민번호\t직종\t근무일수\t일당단가\t지급총액\t소득세\t주민세\t고용보험\t건강보험\t요양보험\t국민연금\t공제계\t실수령액\n";
-            
-            proj.labors.forEach(l => {
+            const daysInMonth = new Date(proj.year, proj.month, 0).getDate();
+            const weekDays = ['일','월','화','수','목','금','토'];
+            function dowName(d) { return weekDays[new Date(proj.year, proj.month - 1, d).getDay()]; }
+
+            // 공제 계산
+            const rows = proj.labors.map((l, idx) => {
                 let autoDays = 0;
-                for (let d = 1; d <= daysInMonthForCopy; d++) {
+                for (let d = 1; d <= daysInMonth; d++) {
                     if (l.attendance[d]) autoDays += Number(l.attendance[d]);
                 }
                 const calc = calculateDeductions(l, autoDays);
-                tsv += `${l.name}\t${l.ssn}\t${l.job || '보통인부'}\t${calc.effectiveDays}\t${l.price}\t${calc.totalWages}\t${calc.incomeTax}\t${calc.localTax}\t${calc.employment}\t${calc.health}\t${calc.care}\t${calc.pension}\t${calc.totalDeduction}\t${calc.netPay}\n`;
+                return { l, calc, idx };
             });
 
-            // navigator.clipboard (HTTPS/localhost 필요); 미지원 환경은 execCommand fallback
+            // 합계 집계
+            let sumDays=0, sumWages=0, sumIncome=0, sumLocal=0, sumEmp=0, sumHealth=0, sumCare=0, sumPension=0, sumDeduct=0, sumNet=0;
+            const dailyCounts = Array(32).fill(0);
+            rows.forEach(({ l, calc }) => {
+                sumDays   += calc.effectiveDays;
+                sumWages  += calc.totalWages;
+                sumIncome += calc.incomeTax;
+                sumLocal  += calc.localTax;
+                sumEmp    += calc.employment;
+                sumHealth += calc.health;
+                sumCare   += calc.care;
+                sumPension+= calc.pension;
+                sumDeduct += calc.totalDeduction;
+                sumNet    += calc.netPay;
+                for (let d = 1; d <= daysInMonth; d++) {
+                    if (l.attendance[d]) dailyCounts[d] += Number(l.attendance[d]);
+                }
+            });
+
+            // ── 인쇄 테이블과 동일한 2행 레이아웃 TSV 구성 ──
+            // 고정 좌측 4칸: NO / 성명 / 주민번호 / 직종
+            // 날짜 1~16 → 우측 집계 (1행)
+            // 날짜 17~31          (2행, 좌측 4칸 비움)
+
+            const rightHdr = ['일수','단가','총액','소득세','지방세','고용보험','건강보험','요양보험','국민연금','공제합계','실지급액'];
+
+            // 헤더 행1: NO·성명·주민번호·직종 + 1~16일(날짜/요일) + 우측
+            let hdr1 = ['NO','성명','주민등록번호','직종'];
+            for (let d = 1; d <= 16; d++) {
+                hdr1.push(d <= daysInMonth ? `${String(d).padStart(2,'0')}(${dowName(d)})` : '');
+            }
+            hdr1 = hdr1.concat(rightHdr);
+
+            // 헤더 행2: 빈칸×4 + 17~31일
+            let hdr2 = ['','','',''];
+            for (let d = 17; d <= 31; d++) {
+                hdr2.push(d <= daysInMonth ? `${String(d).padStart(2,'0')}(${dowName(d)})` : '');
+            }
+
+            let tsv = hdr1.join('\t') + '\n' + hdr2.join('\t') + '\n';
+
+            // 근로자 행 (1명 = 2행)
+            rows.forEach(({ l, calc, idx }) => {
+                // 행1: 1~16일
+                let r1 = [idx + 1, l.name, l.ssn || '', l.job || '보통인부'];
+                for (let d = 1; d <= 16; d++) {
+                    const v = d <= daysInMonth && l.attendance[d] && Number(l.attendance[d]) > 0 ? Number(l.attendance[d]) : '';
+                    r1.push(v);
+                }
+                r1 = r1.concat([
+                    calc.effectiveDays, l.price, calc.totalWages,
+                    calc.incomeTax, calc.localTax, calc.employment,
+                    calc.health, calc.care, calc.pension,
+                    calc.totalDeduction, calc.netPay
+                ]);
+
+                // 행2: 17~31일
+                let r2 = ['','','',''];
+                for (let d = 17; d <= 31; d++) {
+                    const v = d <= daysInMonth && l.attendance[d] && Number(l.attendance[d]) > 0 ? Number(l.attendance[d]) : '';
+                    r2.push(v);
+                }
+
+                tsv += r1.join('\t') + '\n' + r2.join('\t') + '\n';
+            });
+
+            // 합계 행 (2행)
+            let t1 = ['합계','','',''];
+            for (let d = 1; d <= 16; d++) {
+                t1.push(d <= daysInMonth && dailyCounts[d] > 0 ? dailyCounts[d] : '');
+            }
+            t1 = t1.concat([sumDays.toFixed(1), '-', sumWages, sumIncome, sumLocal, sumEmp, sumHealth, sumCare, sumPension, sumDeduct, sumNet]);
+
+            let t2 = ['','','',''];
+            for (let d = 17; d <= 31; d++) {
+                t2.push(d <= daysInMonth && dailyCounts[d] > 0 ? dailyCounts[d] : '');
+            }
+
+            tsv += t1.join('\t') + '\n' + t2.join('\t') + '\n';
+
+            // 클립보드 복사
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(tsv)
-                    .then(() => showToast("대장 데이터가 엑셀 규격(클립보드)으로 복사되었습니다. 엑셀에서 바로 붙여넣기하세요!"))
+                    .then(() => showToast("2행 날짜 구조로 복사 완료! 엑셀에서 바로 붙여넣기하세요."))
                     .catch(() => showCustomAlert("클립보드 복사 권한이 거부되었습니다. 브라우저 권한을 확인해주세요."));
             } else {
-                // 구형 브라우저 fallback
-                const tempTextArea = document.createElement("textarea");
-                tempTextArea.value = tsv;
-                tempTextArea.style.position = "fixed";
-                tempTextArea.style.opacity = "0";
-                document.body.appendChild(tempTextArea);
-                tempTextArea.select();
+                const ta = document.createElement('textarea');
+                ta.value = tsv;
+                ta.style.cssText = 'position:fixed;opacity:0';
+                document.body.appendChild(ta);
+                ta.select();
                 try {
                     document.execCommand('copy');
-                    showToast("대장 데이터가 엑셀 규격(클립보드)으로 복사되었습니다. 엑셀에서 바로 붙여넣기하세요!");
+                    showToast("2행 날짜 구조로 복사 완료! 엑셀에서 바로 붙여넣기하세요.");
                 } catch (err) {
                     showCustomAlert("클립보드 복사 중 에러가 발생하였습니다.");
                 }
-                document.body.removeChild(tempTextArea);
+                document.body.removeChild(ta);
             }
+        }
+
+        // CSV 내보내기 (단순 데이터 추출용)
+        function exportToCSV() {
+            const proj = appState.projects[appState.currentProjectId];
+            if (!proj || !proj.labors || proj.labors.length === 0) {
+                showToast("내보낼 대장 데이터가 비어 있습니다.");
+                return;
+            }
+
+            const daysInMonth = new Date(proj.year, proj.month, 0).getDate();
+            let csv = "\uFEFF";
+            csv += `상호명,${proj.company},지급귀속,${proj.year}년 ${proj.month}월,공종분류,${proj.workType}\n\n`;
+            csv += "NO,직종,성명,주소,주민번호,";
+            for (let d = 1; d <= daysInMonth; d++) { csv += `${d}일,`; }
+            csv += "일수,단가,총액,소득세,지방세,고용보험,건강보험,요양보험,국민연금,공제계,실수령액,은행명,계좌번호\n";
+
+            proj.labors.forEach((l, idx) => {
+                let autoDays = 0;
+                let attStr = "";
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const v = l.attendance[d] || 0;
+                    autoDays += Number(v);
+                    attStr += `${v ? v : ''},`;
+                }
+                const calc = calculateDeductions(l, autoDays);
+                const addr = '"' + (l.address || '').replace(/"/g, '""') + '"';
+                csv += `${idx + 1},${l.job || '보통인부'},${l.name},${addr},'${l.ssn},${attStr}${calc.effectiveDays},${l.price},${calc.totalWages},${calc.incomeTax},${calc.localTax},${calc.employment},${calc.health},${calc.care},${calc.pension},${calc.totalDeduction},${calc.netPay},${l.bank || ''},'${l.account || ''}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `노무대장_${proj.company}_${proj.year}년_${proj.month}월.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showToast("CSV 다운로드 완료");
         }
 
         // [실무 기능] 데이터 전체 영구 포맷
@@ -2296,6 +2449,164 @@
         }
 
         // 하단 합계행 구성
+        // ─────────────────────────────────────────────
+        // 인쇄 전용 2행 날짜 테이블 생성 (PDF 노무비명세서 양식과 동일한 레이아웃)
+        // 근로자 1명 = 2행: 상단(1~16일) / 하단(17~31일)
+        // ─────────────────────────────────────────────
+        function renderPrintTable(proj, daysInMonth, labors, computedRowsData) {
+            const tbl = document.getElementById('printTable');
+            tbl.innerHTML = '';
+            if (!labors || labors.length === 0) return;
+
+            const weekDays = ['일','월','화','수','목','금','토'];
+
+            function dowClass(d) {
+                const dow = new Date(proj.year, proj.month - 1, d).getDay();
+                return dow === 0 ? 'sun' : dow === 6 ? 'sat' : '';
+            }
+            function dowName(d) {
+                return weekDays[new Date(proj.year, proj.month - 1, d).getDay()];
+            }
+            function dayCell(d, attendance, isHdr) {
+                if (isHdr) {
+                    if (d > daysInMonth) return `<th class="pt-day hdr empty-day"></th>`;
+                    return `<th class="pt-day hdr ${dowClass(d)}">${String(d).padStart(2,'0')}<br><span style="font-size:5.5px">${dowName(d)}</span></th>`;
+                } else {
+                    if (d > daysInMonth) return `<td class="pt-day empty-day"></td>`;
+                    const v = attendance[d];
+                    const display = v && Number(v) > 0 ? Number(v) : '';
+                    return `<td class="pt-day ${dowClass(d)}">${display}</td>`;
+                }
+            }
+
+            // ── 헤더: 3행 구조 ──
+            // 행1: NO, 성명, 주민번호, 직종(rowspan=3) | "출근일자" colspan=16 | 일수,단가,총액,공제들(rowspan=3)
+            // 행2: 1~16일 날짜+요일
+            // 행3: "출근일자" colspan=15 헤더 → 17~31
+            // 행4: 17~31일 날짜+요일
+            // → 더 간결하게: 행1=고정셀+1~16날짜헤더, 행2=17~31날짜헤더 (고정셀 rowspan=2)
+
+            const thead = document.createElement('thead');
+            const rightHdr = `
+                <th rowspan="2" class="pt-days hdr">일수</th>
+                <th rowspan="2" class="pt-price hdr">단가</th>
+                <th rowspan="2" class="pt-total hdr">총액</th>
+                <th rowspan="2" class="pt-tax hdr">소득세<br><span style="color:#64748b;font-weight:400">지방세</span></th>
+                <th rowspan="2" class="pt-ins hdr">고용<br>보험</th>
+                <th rowspan="2" class="pt-ins hdr">건강<br><span style="color:#64748b;font-weight:400">장기요양</span></th>
+                <th rowspan="2" class="pt-ins hdr">국민<br>연금</th>
+                <th rowspan="2" class="pt-deduct hdr">공제<br>합계</th>
+                <th rowspan="2" class="pt-net hdr">실지급액</th>
+            `;
+
+            // 행1: 고정 left (rowspan=2) + 1~16
+            let row1 = `<tr class="hdr">
+                <th rowspan="2" class="pt-no hdr">NO</th>
+                <th rowspan="2" class="pt-name hdr">성 명</th>
+                <th rowspan="2" class="pt-ssn hdr">주민등록번호</th>
+                <th rowspan="2" class="pt-job hdr">직 종</th>
+            `;
+            for (let d = 1; d <= 16; d++) row1 += dayCell(d, null, true);
+            row1 += rightHdr + `</tr>`;
+
+            // 행2: 17~31
+            let row2 = `<tr class="hdr">`;
+            for (let d = 17; d <= 31; d++) row2 += dayCell(d, null, true);
+            row2 += `</tr>`;
+
+            thead.innerHTML = row1 + row2;
+            tbl.appendChild(thead);
+
+            // ── tbody: 근로자 1명 = 2행 ──
+            const tbody = document.createElement('tbody');
+
+            const dailyCounts = Array(32).fill(0);
+            let sumDays=0, sumWages=0, sumIncome=0, sumLocal=0, sumEmp=0, sumHealth=0, sumCare=0, sumPension=0, sumDeduct=0, sumNet=0;
+
+            computedRowsData.forEach(({ labor, calc }, idx) => {
+                // 합계 누적
+                sumDays   += calc.effectiveDays;
+                sumWages  += calc.totalWages;
+                sumIncome += calc.incomeTax;
+                sumLocal  += calc.localTax;
+                sumEmp    += calc.employment;
+                sumHealth += calc.health;
+                sumCare   += calc.care;
+                sumPension+= calc.pension;
+                sumDeduct += calc.totalDeduction;
+                sumNet    += calc.netPay;
+                for (let d = 1; d <= 31; d++) {
+                    if (labor.attendance[d]) dailyCounts[d] += Number(labor.attendance[d]);
+                }
+
+                // 상단행 (1~16일) — 고정셀 rowspan=2
+                const tr1 = document.createElement('tr');
+                let r1 = `
+                    <td rowspan="2" class="pt-no">${idx + 1}</td>
+                    <td rowspan="2" class="pt-name" style="font-weight:900">${labor.name}</td>
+                    <td rowspan="2" class="pt-ssn">${labor.ssn || ''}</td>
+                    <td rowspan="2" class="pt-job">${labor.job || '보통인부'}</td>
+                `;
+                for (let d = 1; d <= 16; d++) r1 += dayCell(d, labor.attendance, false);
+                r1 += `
+                    <td rowspan="2" class="pt-days">${calc.effectiveDays}</td>
+                    <td rowspan="2" class="pt-price">${calc.effectiveDays > 0 ? labor.price.toLocaleString() : ''}</td>
+                    <td rowspan="2" class="pt-total">${calc.totalWages > 0 ? calc.totalWages.toLocaleString() : ''}</td>
+                    <td rowspan="2" class="pt-tax" style="font-size:6.5px">${calc.incomeTax.toLocaleString()}<br><span style="color:#64748b">${calc.localTax.toLocaleString()}</span></td>
+                    <td rowspan="2" class="pt-ins">${calc.employment.toLocaleString()}</td>
+                    <td rowspan="2" class="pt-ins" style="font-size:6.5px">${calc.health.toLocaleString()}<br><span style="color:#64748b">${calc.care.toLocaleString()}</span></td>
+                    <td rowspan="2" class="pt-ins">${calc.pension.toLocaleString()}</td>
+                    <td rowspan="2" class="pt-deduct">${calc.totalDeduction.toLocaleString()}</td>
+                    <td rowspan="2" class="pt-net" style="font-weight:900">${calc.netPay.toLocaleString()}</td>
+                `;
+                tr1.innerHTML = r1;
+                tbody.appendChild(tr1);
+
+                // 하단행 (17~31일)
+                const tr2 = document.createElement('tr');
+                let r2 = '';
+                for (let d = 17; d <= 31; d++) r2 += dayCell(d, labor.attendance, false);
+                tr2.innerHTML = r2;
+                // 근로자 구분선 강조
+                tr2.style.borderBottom = '1px solid #374151';
+                tbody.appendChild(tr2);
+            });
+
+            // ── 합계 행 (2행) ──
+            const totalTr1 = document.createElement('tr');
+            totalTr1.className = 'total-row';
+            let t1 = `<td rowspan="2" colspan="4" style="text-align:right;padding-right:4px;font-size:8px">합 계</td>`;
+            for (let d = 1; d <= 16; d++) {
+                const v = d <= daysInMonth && dailyCounts[d] > 0 ? dailyCounts[d] : '';
+                t1 += `<td class="pt-day ${d <= daysInMonth ? dowClass(d) : 'empty-day'}">${v}</td>`;
+            }
+            t1 += `
+                <td rowspan="2" class="pt-days">${sumDays.toFixed(1)}</td>
+                <td rowspan="2" class="pt-price">-</td>
+                <td rowspan="2" class="pt-total">${sumWages.toLocaleString()}</td>
+                <td rowspan="2" class="pt-tax" style="font-size:6.5px">${sumIncome.toLocaleString()}<br><span style="color:#64748b">${sumLocal.toLocaleString()}</span></td>
+                <td rowspan="2" class="pt-ins">${sumEmp.toLocaleString()}</td>
+                <td rowspan="2" class="pt-ins" style="font-size:6.5px">${sumHealth.toLocaleString()}<br><span style="color:#64748b">${sumCare.toLocaleString()}</span></td>
+                <td rowspan="2" class="pt-ins">${sumPension.toLocaleString()}</td>
+                <td rowspan="2" class="pt-deduct">${sumDeduct.toLocaleString()}</td>
+                <td rowspan="2" class="pt-net">${sumNet.toLocaleString()}</td>
+            `;
+            totalTr1.innerHTML = t1;
+            tbody.appendChild(totalTr1);
+
+            const totalTr2 = document.createElement('tr');
+            totalTr2.className = 'total-row';
+            let t2 = '';
+            for (let d = 17; d <= 31; d++) {
+                const v = d <= daysInMonth && dailyCounts[d] > 0 ? dailyCounts[d] : '';
+                t2 += `<td class="pt-day ${d <= daysInMonth ? dowClass(d) : 'empty-day'}">${v}</td>`;
+            }
+            totalTr2.innerHTML = t2;
+            tbody.appendChild(totalTr2);
+
+            tbl.appendChild(tbody);
+        }
+
         function renderTotalRow(rows, daysInMonth) {
             const footer = document.getElementById('totalRow');
             if (rows.length === 0) {
@@ -2473,19 +2784,28 @@
                         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght=300;400;500;700;900&display=swap');
                         body { font-family: 'Noto Sans KR', sans-serif; }
                         @media print {
-                            body { background: white; color: black; }
+                            html, body { background: white !important; margin: 0 !important; padding: 0 !important; }
                             .no-print { display: none !important; }
-                            @page { size: A4 portrait; margin: 1.5cm; }
+                            .print-wrap { padding: 0 !important; background: white !important; }
+                            .doc-body {
+                                max-width: 100% !important;
+                                box-shadow: none !important;
+                                border: none !important;
+                                border-radius: 0 !important;
+                                padding: 0 !important;
+                                font-size: 10.5px !important;
+                            }
+                            @page { size: A4 portrait; margin: 10mm 15mm; }
                         }
                     </style>
                 </head>
-                <body class="bg-slate-50 p-6 md:p-12 print:bg-white print:p-0">
-                    <div class="max-w-[21cm] mx-auto mb-6 bg-blue-50 border border-blue-200 p-3 rounded text-xs text-blue-800 flex justify-between items-center no-print">
-                        <div>🖨️ 표준일용근로계약서 출력을 인쇄창에서 진행할 수 있습니다.</div>
+                <body class="bg-slate-50 print-wrap">
+                    <div class="max-w-[21cm] mx-auto mb-4 bg-blue-50 border border-blue-200 p-3 rounded text-xs text-blue-800 flex justify-between items-center no-print">
+                        <div>🖨️ 표준일용근로계약서 — A4 세로 1페이지로 출력됩니다.</div>
                         <button onclick="window.print()" class="bg-blue-600 text-white px-3 py-1 rounded font-bold hover:bg-blue-700 transition-all">인쇄하기</button>
                     </div>
 
-                    <div class="max-w-[21cm] mx-auto p-12 bg-white border border-slate-300 rounded shadow-md print:border-none print:shadow-none print:p-2 text-xs leading-relaxed text-slate-900">
+                    <div class="doc-body max-w-[21cm] mx-auto p-10 bg-white border border-slate-300 rounded shadow-md text-xs leading-relaxed text-slate-900">
                         <div class="text-center mb-10">
                             <h1 class="text-2xl font-black tracking-widest underline decoration-double underline-offset-8">표 준 일 용 근 로 계 약 서</h1>
                         </div>
@@ -2529,11 +2849,11 @@
                             ① 을은 현장 배치 전 채용안전 교육 및 산업안전 규칙을 필히 성실히 이행 및 탑재한다.</p>
                         </div>
 
-                        <div class="text-center mt-12 mb-8 font-bold">
+                        <div class="text-center mt-8 mb-6 font-bold">
                             <p class="text-slate-800 text-sm">${proj.year}년 ${proj.month}월 ${firstDay}일</p>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-8 pt-6 border-t border-slate-300">
+                        <div class="grid grid-cols-2 gap-8 pt-4 border-t border-slate-300">
                             <div class="space-y-1">
                                 <p class="font-bold text-slate-900 mb-1.5 text-sm">사업주 ("갑")</p>
                                 <p>상 호: ${proj.company}</p>
@@ -2632,19 +2952,28 @@
                         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght=300;400;500;700;900&display=swap');
                         body { font-family: 'Noto Sans KR', sans-serif; }
                         @media print {
-                            body { background: white; color: black; }
+                            html, body { background: white !important; margin: 0 !important; padding: 0 !important; }
                             .no-print { display: none !important; }
-                            @page { size: A4 portrait; margin: 1.5cm; }
+                            .print-wrap { padding: 0 !important; background: white !important; }
+                            .doc-body {
+                                max-width: 100% !important;
+                                box-shadow: none !important;
+                                border: none !important;
+                                border-radius: 0 !important;
+                                padding: 0 !important;
+                                font-size: 10.5px !important;
+                            }
+                            @page { size: A4 portrait; margin: 10mm 15mm; }
                         }
                     </style>
                 </head>
-                <body class="bg-slate-50 p-6 md:p-12 print:bg-white print:p-0">
-                    <div class="max-w-[19cm] mx-auto mb-6 bg-emerald-50 border border-emerald-200 p-3 rounded text-xs text-emerald-800 flex justify-between items-center no-print">
-                        <div>🖨️ 근로기준법 및 2026 규정에 부합하는 일용임금지급명세서 양식입니다.</div>
+                <body class="bg-slate-50 print-wrap">
+                    <div class="max-w-[19cm] mx-auto mb-4 bg-emerald-50 border border-emerald-200 p-3 rounded text-xs text-emerald-800 flex justify-between items-center no-print">
+                        <div>🖨️ 근로기준법 및 2026 규정에 부합하는 일용임금지급명세서 — A4 세로 1페이지로 출력됩니다.</div>
                         <button onclick="window.print()" class="bg-emerald-600 text-white px-3 py-1 rounded font-bold hover:bg-emerald-700 transition-all">인쇄하기</button>
                     </div>
 
-                    <div class="max-w-[19cm] mx-auto p-8 bg-white border border-slate-300 rounded shadow-md print:border-none print:shadow-none print:p-1 text-xs text-slate-800 leading-relaxed">
+                    <div class="doc-body max-w-[19cm] mx-auto p-8 bg-white border border-slate-300 rounded shadow-md text-xs text-slate-800 leading-relaxed">
                         <div class="text-center mb-8">
                             <h1 class="text-2xl font-black tracking-widest border-b-2 border-black pb-2">${proj.month}월 일용직 임금 지급명세서</h1>
                             <p class="text-[10px] text-slate-400 mt-1">본 임금명세서는 근로기준법 제48조제2항 및 법정 규칙에 근거하여 상세 지급 내역을 명시합니다.</p>
@@ -2793,19 +3122,28 @@
                         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght=300;400;500;700;900&display=swap');
                         body { font-family: 'Noto Sans KR', sans-serif; }
                         @media print {
-                            body { background: white; color: black; }
+                            html, body { background: white !important; margin: 0 !important; padding: 0 !important; }
                             .no-print { display: none !important; }
-                            @page { size: A4 portrait; margin: 1.5cm; }
+                            .print-wrap { padding: 0 !important; background: white !important; }
+                            .doc-body {
+                                max-width: 100% !important;
+                                box-shadow: none !important;
+                                border: none !important;
+                                border-radius: 0 !important;
+                                padding: 0 !important;
+                                font-size: 10.5px !important;
+                            }
+                            @page { size: A4 portrait; margin: 10mm 15mm; }
                         }
                     </style>
                 </head>
-                <body class="bg-slate-50 p-6 md:p-12 print:bg-white print:p-0">
-                    <div class="max-w-[21cm] mx-auto mb-6 bg-purple-50 border border-purple-200 p-3 rounded text-xs text-purple-800 flex justify-between items-center no-print">
-                        <div>🖨️ 산업안전보건법 제29조에 부합하는 채용시 안전교육 이수 일지입니다.</div>
+                <body class="bg-slate-50 print-wrap">
+                    <div class="max-w-[21cm] mx-auto mb-4 bg-purple-50 border border-purple-200 p-3 rounded text-xs text-purple-800 flex justify-between items-center no-print">
+                        <div>🖨️ 산업안전보건법 제29조에 부합하는 채용시 안전교육 이수 일지 — A4 세로 1페이지로 출력됩니다.</div>
                         <button onclick="window.print()" class="bg-purple-600 text-white px-3 py-1 rounded font-bold hover:bg-purple-700 transition-all">인쇄하기</button>
                     </div>
 
-                    <div class="max-w-[21cm] mx-auto p-12 bg-white border border-slate-300 rounded shadow-md print:border-none print:shadow-none print:p-1 text-xs text-slate-800 leading-relaxed">
+                    <div class="doc-body max-w-[21cm] mx-auto p-10 bg-white border border-slate-300 rounded shadow-md text-xs text-slate-800 leading-relaxed">
                         <div class="text-center mb-8">
                             <h1 class="text-xl font-black border-2 border-black p-3 inline-block">신 규 채 용 자 안 전 보 건 교 육 일 지</h1>
                         </div>
@@ -2877,7 +3215,7 @@
                             ${eduDate}
                         </div>
 
-                        <div class="flex justify-between items-center mt-12 pt-4 border-t border-slate-200">
+                        <div class="flex justify-between items-center mt-6 pt-4 border-t border-slate-200">
                             <p class="font-bold font-sans">안전담당관(소장): ________________________ (인)</p>
                             <p class="font-bold font-sans">${proj.company} 대표</p>
                         </div>
@@ -3751,7 +4089,7 @@
             /* A4 꽉채움: 여백·크기 완전 제어 */
             @page {
                 size: A4 portrait;
-                margin: 10mm 10mm 10mm 10mm;
+                margin: 10mm 15mm;
             }
 
             .doc-card {
@@ -4005,8 +4343,8 @@
             document.getElementById('modalWorkType').value = "";
         }
 
-        // 대장 데이터 CSV 추출 다운로드
-        function exportToCSV() {
+        // 대장 데이터 XLS 내보내기 (Excel XML 포맷 — 서식/병합/색상 포함)
+        function exportToXLS() {
             const proj = appState.projects[appState.currentProjectId];
             if (!proj || !proj.labors || proj.labors.length === 0) {
                 showToast("내보낼 대장 데이터가 비어 있습니다.");
@@ -4014,34 +4352,244 @@
             }
 
             const daysInMonth = new Date(proj.year, proj.month, 0).getDate();
-            let csv = "\uFEFF";
-            csv += `상호명,${proj.company},지급귀속,${proj.year}년 ${proj.month}월,공종분류,${proj.workType}\n\n`;
-            csv += "NO,직종,성명,주소,주민번호,";
-            for (let d = 1; d <= daysInMonth; d++) { csv += `${d}일,`; }
-            csv += "일수,단가,총액,기타(실수령),은행명,계좌번호\n";
+            const weekDays = ['일','월','화','수','목','금','토'];
 
-            proj.labors.forEach((l, idx) => {
+            function dowName(d) {
+                return weekDays[new Date(proj.year, proj.month - 1, d).getDay()];
+            }
+            function isSun(d) { return new Date(proj.year, proj.month - 1, d).getDay() === 0; }
+            function isSat(d) { return new Date(proj.year, proj.month - 1, d).getDay() === 6; }
+
+            // 공제 계산
+            const rows = proj.labors.map((l, idx) => {
                 let autoDays = 0;
-                let attStr = "";
                 for (let d = 1; d <= daysInMonth; d++) {
-                    const active = l.attendance[d] || 0;
-                    autoDays += Number(active);
-                    attStr += `${active ? active : ''},`;
+                    if (l.attendance[d]) autoDays += Number(l.attendance[d]);
                 }
                 const calc = calculateDeductions(l, autoDays);
-                const addr = '"' + (l.address || '').replace(/"/g, '""') + '"';
-                csv += `${idx + 1},${l.job || '보통인부'},${l.name},${addr},'${l.ssn},${attStr}${calc.effectiveDays},${l.price},${calc.totalWages},${calc.netPay},${l.bank || ''},'${l.account || ''}\n`;
+                return { l, calc, idx };
             });
 
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.setAttribute("download", `노무대장_${proj.company}_${proj.year}년_${proj.month}월.csv`);
+            // 합계
+            let sumDays=0, sumWages=0, sumIncome=0, sumLocal=0, sumEmp=0, sumHealth=0, sumCare=0, sumPension=0, sumDeduct=0, sumNet=0;
+            const dailyCounts = Array(32).fill(0);
+            rows.forEach(({ l, calc }) => {
+                sumDays   += calc.effectiveDays;
+                sumWages  += calc.totalWages;
+                sumIncome += calc.incomeTax;
+                sumLocal  += calc.localTax;
+                sumEmp    += calc.employment;
+                sumHealth += calc.health;
+                sumCare   += calc.care;
+                sumPension+= calc.pension;
+                sumDeduct += calc.totalDeduction;
+                sumNet    += calc.netPay;
+                for (let d = 1; d <= daysInMonth; d++) {
+                    if (l.attendance[d]) dailyCounts[d] += Number(l.attendance[d]);
+                }
+            });
+
+            // ── 스타일 정의 ──
+            const styles = `
+  <Style ss:ID="title"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="13"/><Interior ss:Color="#1e293b" ss:Pattern="Solid"/><Font ss:Color="#ffffff" ss:Bold="1" ss:Size="13"/></Style>
+  <Style ss:ID="hdr"><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/><Font ss:Bold="1" ss:Size="8"/><Interior ss:Color="#e2e8f0" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>
+  <Style ss:ID="hdrSun"><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/><Font ss:Bold="1" ss:Size="8" ss:Color="#dc2626"/><Interior ss:Color="#fff5f5" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>
+  <Style ss:ID="hdrSat"><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/><Font ss:Bold="1" ss:Size="8" ss:Color="#1d4ed8"/><Interior ss:Color="#eff6ff" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>
+  <Style ss:ID="cell"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Size="8"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>
+  <Style ss:ID="cellName"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="8"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>
+  <Style ss:ID="cellSun"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Size="8" ss:Color="#dc2626"/><Interior ss:Color="#fff5f5" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>
+  <Style ss:ID="cellSat"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Size="8" ss:Color="#1d4ed8"/><Interior ss:Color="#eff6ff" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>
+  <Style ss:ID="cellEmpty"><Interior ss:Color="#f1f5f9" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>
+  <Style ss:ID="total"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="8"/><Interior ss:Color="#dbeafe" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/></Borders></Style>
+  <Style ss:ID="totalSun"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="8" ss:Color="#dc2626"/><Interior ss:Color="#dbeafe" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/></Borders></Style>
+  <Style ss:ID="totalSat"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="8" ss:Color="#1d4ed8"/><Interior ss:Color="#dbeafe" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/></Borders></Style>
+  <Style ss:ID="money"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><Font ss:Size="8"/><NumberFormat ss:Format="#,##0"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>
+  <Style ss:ID="moneyBold"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="8"/><NumberFormat ss:Format="#,##0"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>
+  <Style ss:ID="moneyTotal"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="8"/><NumberFormat ss:Format="#,##0"/><Interior ss:Color="#dbeafe" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/></Borders></Style>`;
+
+            // 셀 헬퍼
+            function C(val, styleId, mergeAcross, mergeDown, type) {
+                let attrs = `ss:StyleID="${styleId}"`;
+                if (mergeAcross) attrs += ` ss:MergeAcross="${mergeAcross}"`;
+                if (mergeDown)   attrs += ` ss:MergeDown="${mergeDown}"`;
+                const t = type || (typeof val === 'number' ? 'Number' : 'String');
+                const safeVal = String(val).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                return `<Cell ${attrs}><Data ss:Type="${t}">${safeVal}</Data></Cell>`;
+            }
+            function EMPTY(styleId) { return `<Cell ss:StyleID="${styleId}"><Data ss:Type="String"></Data></Cell>`; }
+            function dayStyle(d, isHdr, isTotal) {
+                if (d > daysInMonth) return isHdr ? 'hdr' : 'cellEmpty';
+                if (isSun(d)) return isTotal ? 'totalSun' : isHdr ? 'hdrSun' : 'cellSun';
+                if (isSat(d)) return isTotal ? 'totalSat' : isHdr ? 'hdrSat' : 'cellSat';
+                return isTotal ? 'total' : isHdr ? 'hdr' : 'cell';
+            }
+
+            // ── 행 생성 ──
+            let xlsRows = '';
+
+            // 타이틀 행 (회사명/현장명)
+            const totalCols = 4 + 31 + 9; // NO+성명+주민번호+직종 + 1~31 + 우측9개
+            xlsRows += `<Row ss:Height="22">${C(`${proj.company} — ${proj.projectName} (${proj.year}년 ${proj.month}월 노무비 지급명세)`, 'title', totalCols - 1, 0, 'String')}</Row>`;
+
+            // 헤더 행 1: 고정셀(rowspan=2용 MergeDown=1) + 1~16일 + 우측셀(MergeDown=1)
+            xlsRows += `<Row ss:Height="28">`;
+            xlsRows += C('NO',       'hdr', 0, 1);
+            xlsRows += C('성  명',   'hdr', 0, 1);
+            xlsRows += C('주민등록번호','hdr', 0, 1);
+            xlsRows += C('직  종',   'hdr', 0, 1);
+            for (let d = 1; d <= 16; d++) {
+                xlsRows += C(d <= daysInMonth ? `${String(d).padStart(2,'0')}\n${dowName(d)}` : '', dayStyle(d, true, false));
+            }
+            xlsRows += C('일수',     'hdr', 0, 1);
+            xlsRows += C('단가',     'hdr', 0, 1);
+            xlsRows += C('총액',     'hdr', 0, 1);
+            xlsRows += C('소득세\n지방세', 'hdr', 0, 1);
+            xlsRows += C('고용보험', 'hdr', 0, 1);
+            xlsRows += C('건강\n장기요양', 'hdr', 0, 1);
+            xlsRows += C('국민연금', 'hdr', 0, 1);
+            xlsRows += C('공제합계', 'hdr', 0, 1);
+            xlsRows += C('실지급액', 'hdr', 0, 1);
+            xlsRows += `</Row>`;
+
+            // 헤더 행 2: 17~31일 (고정셀/우측셀은 MergeDown으로 이미 병합됨)
+            xlsRows += `<Row ss:Height="28">`;
+            // 앞 4개 고정셀 skip → Index로 17번째 셀부터 시작
+            xlsRows += `<Cell ss:Index="5"`;
+            // 17~31
+            for (let d = 17; d <= 31; d++) {
+                if (d === 17) {
+                    xlsRows += `ss:StyleID="${dayStyle(d, true, false)}"><Data ss:Type="String">${d <= daysInMonth ? String(d).padStart(2,'0') + '\n' + dowName(d) : ''}</Data></Cell>`;
+                } else {
+                    xlsRows += C(d <= daysInMonth ? `${String(d).padStart(2,'0')}\n${dowName(d)}` : '', dayStyle(d, true, false));
+                }
+            }
+            xlsRows += `</Row>`;
+
+            // 근로자 행 (1명 = 2행)
+            rows.forEach(({ l, calc, idx }) => {
+                // 행1: 1~16일
+                xlsRows += `<Row ss:Height="16">`;
+                xlsRows += C(idx + 1,           'cell',     0, 1);
+                xlsRows += C(l.name,             'cellName', 0, 1);
+                xlsRows += C(l.ssn || '',        'cell',     0, 1);
+                xlsRows += C(l.job || '보통인부','cell',     0, 1);
+                for (let d = 1; d <= 16; d++) {
+                    const v = d <= daysInMonth && l.attendance[d] && Number(l.attendance[d]) > 0 ? Number(l.attendance[d]) : '';
+                    xlsRows += v !== '' ? C(v, dayStyle(d,false,false), 0, 0, 'Number') : EMPTY(dayStyle(d,false,false));
+                }
+                xlsRows += C(calc.effectiveDays, 'cell',      0, 1, 'Number');
+                xlsRows += C(l.price,            'money',     0, 1, 'Number');
+                xlsRows += C(calc.totalWages,    'moneyBold', 0, 1, 'Number');
+                xlsRows += C(calc.incomeTax + calc.localTax, 'money', 0, 1, 'Number');
+                xlsRows += C(calc.employment,    'money',     0, 1, 'Number');
+                xlsRows += C(calc.health + calc.care, 'money', 0, 1, 'Number');
+                xlsRows += C(calc.pension,       'money',     0, 1, 'Number');
+                xlsRows += C(calc.totalDeduction,'money',     0, 1, 'Number');
+                xlsRows += C(calc.netPay,        'moneyBold', 0, 1, 'Number');
+                xlsRows += `</Row>`;
+
+                // 행2: 17~31일
+                xlsRows += `<Row ss:Height="16"><Cell ss:Index="5">`;
+                for (let d = 17; d <= 31; d++) {
+                    const v = d <= daysInMonth && l.attendance[d] && Number(l.attendance[d]) > 0 ? Number(l.attendance[d]) : '';
+                    const s = dayStyle(d, false, false);
+                    if (d === 17) {
+                        xlsRows += `ss:StyleID="${s}"><Data ss:Type="${v !== '' ? 'Number' : 'String'}">${v}</Data></Cell>`;
+                    } else {
+                        xlsRows += v !== '' ? C(v, s, 0, 0, 'Number') : EMPTY(s);
+                    }
+                }
+                xlsRows += `</Row>`;
+            });
+
+            // 합계 행1: 1~16
+            xlsRows += `<Row ss:Height="18">`;
+            xlsRows += C('합   계', 'total', 3, 1);  // colspan 4 → MergeAcross=3
+            for (let d = 1; d <= 16; d++) {
+                const v = d <= daysInMonth && dailyCounts[d] > 0 ? dailyCounts[d] : '';
+                xlsRows += v !== '' ? C(v, dayStyle(d,false,true), 0, 0, 'Number') : EMPTY(dayStyle(d,false,true));
+            }
+            xlsRows += C(sumDays,   'total',      0, 1, 'Number');
+            xlsRows += C('-',       'total',      0, 1);
+            xlsRows += C(sumWages,  'moneyTotal', 0, 1, 'Number');
+            xlsRows += C(sumIncome + sumLocal, 'moneyTotal', 0, 1, 'Number');
+            xlsRows += C(sumEmp,    'moneyTotal', 0, 1, 'Number');
+            xlsRows += C(sumHealth + sumCare, 'moneyTotal', 0, 1, 'Number');
+            xlsRows += C(sumPension,'moneyTotal', 0, 1, 'Number');
+            xlsRows += C(sumDeduct, 'moneyTotal', 0, 1, 'Number');
+            xlsRows += C(sumNet,    'moneyTotal', 0, 1, 'Number');
+            xlsRows += `</Row>`;
+
+            // 합계 행2: 17~31
+            xlsRows += `<Row ss:Height="18"><Cell ss:Index="5">`;
+            for (let d = 17; d <= 31; d++) {
+                const v = d <= daysInMonth && dailyCounts[d] > 0 ? dailyCounts[d] : '';
+                const s = dayStyle(d, false, true);
+                if (d === 17) {
+                    xlsRows += `ss:StyleID="${s}"><Data ss:Type="${v !== '' ? 'Number' : 'String'}">${v}</Data></Cell>`;
+                } else {
+                    xlsRows += v !== '' ? C(v, s, 0, 0, 'Number') : EMPTY(s);
+                }
+            }
+            xlsRows += `</Row>`;
+
+            // 열 너비 설정
+            let colDefs = `
+  <Column ss:Width="20"/>
+  <Column ss:Width="40"/>
+  <Column ss:Width="60"/>
+  <Column ss:Width="30"/>`;
+            for (let d = 1; d <= 31; d++) {
+                colDefs += `\n  <Column ss:Width="${d <= daysInMonth ? 18 : 14}"/>`;
+            }
+            colDefs += `
+  <Column ss:Width="22"/>
+  <Column ss:Width="40"/>
+  <Column ss:Width="52"/>
+  <Column ss:Width="45"/>
+  <Column ss:Width="38"/>
+  <Column ss:Width="45"/>
+  <Column ss:Width="38"/>
+  <Column ss:Width="48"/>
+  <Column ss:Width="55"/>`;
+
+            // ── XML 조립 ──
+            const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:x="urn:schemas-microsoft-com:office:excel">
+ <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
+  <Title>${proj.company} ${proj.year}년 ${proj.month}월 노무비명세서</Title>
+ </DocumentProperties>
+ <ExcelWorkbook xmlns="urn:schemas-microsoft-com:office:excel">
+  <WindowHeight>8000</WindowHeight><WindowWidth>18000</WindowWidth>
+ </ExcelWorkbook>
+ <Styles>${styles}
+ </Styles>
+ <Worksheet ss:Name="${proj.month}월 노무대장">
+  <Table>${colDefs}
+${xlsRows}
+  </Table>
+  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <PageSetup><Layout x:Orientation="Landscape"/><PageMargins x:Bottom="0.4" x:Left="0.3" x:Right="0.3" x:Top="0.4"/></PageSetup>
+   <FitToPage/><Print><FitWidth>1</FitWidth><FitHeight>0</FitHeight></Print>
+   <FreezePanes/><SplitHorizontal>3</SplitHorizontal><TopRowBottomPane>3</TopRowBottomPane>
+   <ActivePane>2</ActivePane>
+  </WorksheetOptions>
+ </Worksheet>
+</Workbook>`;
+
+            const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+            const url  = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href  = url;
+            link.setAttribute('download', `노무비명세서_${proj.company}_${proj.year}년_${proj.month}월.xls`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            showToast("CSV 다운로드 완료 (직종→이름→주소→주민번호→출근일자→일수→단가→총액→기타→은행→계좌)");
+            URL.revokeObjectURL(url);
+            showToast(`XLS 저장 완료 — 노무비명세서_${proj.company}_${proj.year}년_${proj.month}월.xls`);
         }
 
         // 전체 데이터 백업 및 복구
