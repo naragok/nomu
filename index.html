@@ -91,7 +91,7 @@
         }
     </style>
 </head>
-<body class="text-slate-800 flex flex-col min-h-screen text-xs">
+<body class="text-slate-800 flex flex-col min-h-screen lg:h-screen lg:overflow-hidden text-xs">
 
     <!-- 상단 통합 바 (no-print) -->
     <header class="bg-slate-900 text-white px-5 py-3 flex justify-between items-center shadow-md h-[56px] shrink-0 no-print">
@@ -138,10 +138,10 @@
     </header>
 
     <!-- 대시보드 뷰어 레이아웃 -->
-    <div class="app-container flex flex-col lg:flex-row gap-3 p-3 flex-1 overflow-hidden">
+    <div class="app-container flex flex-col lg:flex-row gap-3 p-3 flex-1 min-h-0 overflow-hidden">
         
         <!-- 좌측 조작반 (no-print) -->
-        <aside class="w-full lg:w-[340px] shrink-0 flex flex-col gap-3 no-print h-full overflow-y-auto pr-1">
+        <aside class="w-full lg:w-[340px] shrink-0 flex flex-col gap-3 no-print h-full min-h-0 overflow-y-auto pr-1">
             
             <!-- 1. 현장 대장 선택 -->
             <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200">
@@ -243,32 +243,98 @@
                 </div>
             </div>
 
-            <!-- 3. 실시간 요율 기준 요약 카드 -->
+            <!-- 3. 실시간 요율 기준 요약 카드 (수정 가능) -->
             <div class="bg-slate-900 text-slate-300 p-3.5 rounded-xl shadow-sm border border-slate-800">
-                <h2 class="text-xs font-black text-white mb-2 flex items-center gap-1.5 uppercase tracking-wider">
-                    <i data-lucide="shield-check" class="text-amber-400 w-4 h-4"></i>
-                    2026년 사회보험 공제 요율
-                </h2>
-                <div class="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10.5px] border-b border-slate-800 pb-2 mb-2">
-                    <div class="flex justify-between">
-                        <span class="text-slate-400">국민연금</span>
-                        <span class="font-bold text-white">4.5% <span class="text-[9px] text-amber-400">(8일↑, 만60세미만)</span></span>
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xs font-black text-white flex items-center gap-1.5 uppercase tracking-wider">
+                        <i data-lucide="shield-check" class="text-amber-400 w-4 h-4"></i>
+                        사회보험·세금 공제 요율
+                    </h2>
+                    <button onclick="resetTaxRates()" class="text-[9px] bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold px-1.5 py-0.5 rounded transition-all flex items-center gap-0.5" title="2026년 법정 기본값으로 복원">
+                        <i data-lucide="rotate-ccw" class="w-2.5 h-2.5"></i> 기본값
+                    </button>
+                </div>
+                <div class="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[10px] border-b border-slate-800 pb-2 mb-2">
+                    <div class="flex items-center justify-between gap-1">
+                        <span class="text-slate-400 shrink-0">국민연금</span>
+                        <span class="flex items-center gap-0.5">
+                            <input type="number" step="0.001" id="rateInputPension" onchange="updateTaxRate('pensionRate', this.value, true)" class="w-12 bg-slate-800 border border-slate-700 rounded px-1 py-0.5 text-right text-white font-bold focus:ring-1 focus:ring-amber-400 outline-none">
+                            <span class="text-slate-500">%</span>
+                        </span>
                     </div>
-                    <div class="flex justify-between">
-                        <span class="text-slate-400">건강보험</span>
-                        <span class="font-bold text-white">3.545% <span class="text-[9px] text-amber-400">(8일↑, 연령무관)</span></span>
+                    <div class="flex items-center justify-between gap-1">
+                        <span class="text-slate-400 shrink-0">건강보험</span>
+                        <span class="flex items-center gap-0.5">
+                            <input type="number" step="0.001" id="rateInputHealth" onchange="updateTaxRate('healthRate', this.value, true)" class="w-12 bg-slate-800 border border-slate-700 rounded px-1 py-0.5 text-right text-white font-bold focus:ring-1 focus:ring-amber-400 outline-none">
+                            <span class="text-slate-500">%</span>
+                        </span>
                     </div>
-                    <div class="flex justify-between">
-                        <span class="text-slate-400">장기요양</span>
-                        <span class="font-bold text-white">건강의 12.95%</span>
+                    <div class="flex items-center justify-between gap-1">
+                        <span class="text-slate-400 shrink-0">장기요양<span class="text-[8px]">(건보대비)</span></span>
+                        <span class="flex items-center gap-0.5">
+                            <input type="number" step="0.01" id="rateInputCare" onchange="updateTaxRate('careRate', this.value, true)" class="w-12 bg-slate-800 border border-slate-700 rounded px-1 py-0.5 text-right text-white font-bold focus:ring-1 focus:ring-amber-400 outline-none">
+                            <span class="text-slate-500">%</span>
+                        </span>
                     </div>
-                    <div class="flex justify-between">
-                        <span class="text-slate-400">고용보험</span>
-                        <span class="font-bold text-white">0.9% <span class="text-[9px] text-amber-400">(전체, 만65세미만)</span></span>
+                    <div class="flex items-center justify-between gap-1">
+                        <span class="text-slate-400 shrink-0">고용보험</span>
+                        <span class="flex items-center gap-0.5">
+                            <input type="number" step="0.001" id="rateInputEmployment" onchange="updateTaxRate('employmentRate', this.value, true)" class="w-12 bg-slate-800 border border-slate-700 rounded px-1 py-0.5 text-right text-white font-bold focus:ring-1 focus:ring-amber-400 outline-none">
+                            <span class="text-slate-500">%</span>
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between gap-1">
+                        <span class="text-slate-400 shrink-0">소득세율</span>
+                        <span class="flex items-center gap-0.5">
+                            <input type="number" step="0.001" id="rateInputIncomeTax" onchange="updateTaxRate('incomeTaxRate', this.value, true)" class="w-12 bg-slate-800 border border-slate-700 rounded px-1 py-0.5 text-right text-white font-bold focus:ring-1 focus:ring-amber-400 outline-none">
+                            <span class="text-slate-500">%</span>
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between gap-1">
+                        <span class="text-slate-400 shrink-0">지방세<span class="text-[8px]">(소득세대비)</span></span>
+                        <span class="flex items-center gap-0.5">
+                            <input type="number" step="1" id="rateInputLocalTax" onchange="updateTaxRate('localTaxRate', this.value, true)" class="w-12 bg-slate-800 border border-slate-700 rounded px-1 py-0.5 text-right text-white font-bold focus:ring-1 focus:ring-amber-400 outline-none">
+                            <span class="text-slate-500">%</span>
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between gap-1">
+                        <span class="text-slate-400 shrink-0">비과세 일당</span>
+                        <span class="flex items-center gap-0.5">
+                            <input type="number" step="10000" id="rateInputTaxFree" onchange="updateTaxRate('taxFreeAmount', this.value, false)" class="w-16 bg-slate-800 border border-slate-700 rounded px-1 py-0.5 text-right text-white font-bold focus:ring-1 focus:ring-amber-400 outline-none">
+                            <span class="text-slate-500 text-[9px]">원</span>
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between gap-1">
+                        <span class="text-slate-400 shrink-0">소액부징수<span class="text-[8px]">(일별)</span></span>
+                        <span class="flex items-center gap-0.5">
+                            <input type="number" step="100" id="rateInputMinTax" onchange="updateTaxRate('minTaxThreshold', this.value, false)" class="w-16 bg-slate-800 border border-slate-700 rounded px-1 py-0.5 text-right text-white font-bold focus:ring-1 focus:ring-amber-400 outline-none">
+                            <span class="text-slate-500 text-[9px]">원</span>
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between gap-1">
+                        <span class="text-slate-400 shrink-0">4대보험 취득<span class="text-[8px]">(최소일수)</span></span>
+                        <span class="flex items-center gap-0.5">
+                            <input type="number" step="1" id="rateInputInsuranceDays" onchange="updateTaxRate('insuranceMinDays', this.value, false)" class="w-12 bg-slate-800 border border-slate-700 rounded px-1 py-0.5 text-right text-white font-bold focus:ring-1 focus:ring-amber-400 outline-none">
+                            <span class="text-slate-500 text-[9px]">일</span>
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between gap-1">
+                        <span class="text-slate-400 shrink-0">연금면제<span class="text-[8px]">(연령)</span></span>
+                        <span class="flex items-center gap-0.5">
+                            <input type="number" step="1" id="rateInputPensionAge" onchange="updateTaxRate('pensionExemptAge', this.value, false)" class="w-12 bg-slate-800 border border-slate-700 rounded px-1 py-0.5 text-right text-white font-bold focus:ring-1 focus:ring-amber-400 outline-none">
+                            <span class="text-slate-500 text-[9px]">세</span>
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between gap-1">
+                        <span class="text-slate-400 shrink-0">고용면제<span class="text-[8px]">(연령)</span></span>
+                        <span class="flex items-center gap-0.5">
+                            <input type="number" step="1" id="rateInputEmploymentAge" onchange="updateTaxRate('employmentExemptAge', this.value, false)" class="w-12 bg-slate-800 border border-slate-700 rounded px-1 py-0.5 text-right text-white font-bold focus:ring-1 focus:ring-amber-400 outline-none">
+                            <span class="text-slate-500 text-[9px]">세</span>
+                        </span>
                     </div>
                 </div>
-                <div class="text-[10px] text-slate-400 leading-tight">
-                    💡 <strong>소득세:</strong> 일당 15만원 비과세 공제 후 원천징수세율 2.7%(지방소득세 0.27%)가 차등 적용되며, 일별 세액이 1,000원 미만인 경우 소액부징수 제도로 면제됩니다.
+                <div class="text-[9.5px] text-slate-500 leading-tight">
+                    💡 값을 바꾸면 즉시 전체 대장에 재계산 적용되며 브라우저에 저장됩니다. 일별 세액이 소액부징수 기준 미만이면 전액 징수 제외됩니다.
                 </div>
             </div>
 
@@ -323,7 +389,7 @@
         </aside>
 
         <!-- 우측 실시간 노무 대장 테이블 영역 -->
-        <main class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col print-container h-full">
+        <main class="flex-1 min-h-0 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col print-container h-full">
             
             <!-- 테이블 제어 및 검색 헤더 바 (no-print) -->
             <div class="p-3 border-b border-slate-200 bg-slate-50 flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-2 shrink-0 no-print">
@@ -399,7 +465,7 @@
             </div>
 
             <!-- 실시간 스케일이 조정되는 노무 대장 출력 테이블 본체 -->
-            <div class="table-container flex-1 overflow-auto bg-slate-50">
+            <div class="table-container flex-1 min-h-0 overflow-auto bg-slate-50">
                 <table class="w-full text-left border-collapse min-w-[2200px] bg-white" id="paymentTable">
                     <thead>
                         <tr id="attendanceHeaderRow" class="bg-slate-200/90 text-[10px] font-bold text-slate-700 border-b border-slate-300 text-center select-none sticky top-0 z-10 print:bg-slate-200 print:text-black print:border-black">
@@ -409,11 +475,11 @@
                             <th rowspan="2" class="p-1 border-r border-slate-300 w-20 print:border-black">직종</th>
                             <th id="attendanceGroupAnchor" style="display:none;"></th>
                             <th colspan="31" id="attendanceGroupHeaderCell" class="attn-group-th p-0.5 border-r border-slate-300 tracking-wider print:border-black">출 근 일 자 (1일 ~ 31일)</th>
-                            <th rowspan="2" class="p-1 border-r border-slate-300 w-16 print:border-black">일수</th>
-                            <th rowspan="2" class="p-1 border-r border-slate-300 w-24 print:border-black">단가</th>
-                            <th rowspan="2" class="p-1 border-r border-slate-300 w-28 print:border-black">총액</th>
+                            <th rowspan="2" class="p-1 border-r border-slate-300 whitespace-nowrap print:border-black">일수</th>
+                            <th rowspan="2" class="p-1 border-r border-slate-300 whitespace-nowrap print:border-black">단가</th>
+                            <th rowspan="2" class="p-1 border-r border-slate-300 whitespace-nowrap print:border-black">총액</th>
                             <th colspan="5" class="p-0.5 border-r border-slate-300 print:border-black">공제 금액 내역 (2026년 나이/세법 요율 기준)</th>
-                            <th rowspan="2" class="p-1 border-r border-slate-300 w-28 print:border-black">지급액<br><span class="text-[9px] font-normal">(실수령액)</span></th>
+                            <th rowspan="2" class="p-1 border-r border-slate-300 whitespace-nowrap print:border-black">지급액<br><span class="text-[9px] font-normal">(실수령액)</span></th>
                             <th rowspan="2" class="p-1 w-52 no-print">필수 서류 발급 / 제어</th>
                         </tr>
                         <tr id="daysOfWeekHeader" class="bg-slate-100 text-[9.5px] text-slate-600 border-b border-slate-300 text-center sticky top-[28px] z-10 print:bg-slate-100 print:text-black print:border-black">
@@ -1139,6 +1205,85 @@
             projects: {} 
         };
 
+        // ===== 공제 요율 설정 (사용자 수정 가능) =====
+        const DEFAULT_TAX_RATES = {
+            pensionRate: 0.045,       // 국민연금 근로자부 요율
+            healthRate: 0.03545,      // 건강보험 근로자부 요율
+            careRate: 0.1295,         // 장기요양보험 (건강보험료 대비 비율)
+            employmentRate: 0.009,    // 고용보험(실업급여) 근로자부 요율
+            incomeTaxRate: 0.027,     // 소득세 원천징수세율 (비과세 공제 후)
+            localTaxRate: 0.1,        // 지방소득세 (소득세 대비 비율)
+            taxFreeAmount: 150000,    // 일당 비과세 공제액
+            minTaxThreshold: 1000,    // 소액부징수 기준 (일별 세액)
+            insuranceMinDays: 8,      // 국민/건강/요양보험 취득 최소 근로일수
+            pensionExemptAge: 60,     // 국민연금 면제 연령
+            employmentExemptAge: 65   // 고용보험 면제 연령
+        };
+        let taxRates = JSON.parse(JSON.stringify(DEFAULT_TAX_RATES));
+
+        function loadTaxRates() {
+            try {
+                const saved = localStorage.getItem('labor_payment_tax_rates_v1');
+                if (saved) {
+                    taxRates = { ...DEFAULT_TAX_RATES, ...JSON.parse(saved) };
+                }
+            } catch (e) {
+                taxRates = JSON.parse(JSON.stringify(DEFAULT_TAX_RATES));
+            }
+        }
+
+        function saveTaxRates() {
+            try {
+                localStorage.setItem('labor_payment_tax_rates_v1', JSON.stringify(taxRates));
+            } catch (e) {}
+        }
+
+        // 사이드바 입력값을 taxRates에 반영 후 저장 + 전체 재계산
+        function updateTaxRate(field, value, isPercent) {
+            let num = parseFloat(value);
+            if (isNaN(num) || num < 0) num = 0;
+            taxRates[field] = isPercent ? (num / 100) : num;
+            saveTaxRates();
+            _insuranceAgeCache.clear();
+            updateHeaderAndTable();
+            showToast('공제 요율이 적용되었습니다.');
+        }
+
+        function resetTaxRates() {
+            if (!confirm('공제 요율을 2026년 법정 기본값으로 되돌리시겠습니까?')) return;
+            taxRates = JSON.parse(JSON.stringify(DEFAULT_TAX_RATES));
+            saveTaxRates();
+            _insuranceAgeCache.clear();
+            renderTaxRateInputs();
+            updateHeaderAndTable();
+            showToast('기본 요율로 복원되었습니다.');
+        }
+
+        // 사이드바 공제요율 입력 필드에 현재 taxRates 값 반영
+        function renderTaxRateInputs() {
+            const map = {
+                rateInputPension: (taxRates.pensionRate * 100),
+                rateInputHealth: (taxRates.healthRate * 100),
+                rateInputCare: (taxRates.careRate * 100),
+                rateInputEmployment: (taxRates.employmentRate * 100),
+                rateInputIncomeTax: (taxRates.incomeTaxRate * 100),
+                rateInputLocalTax: (taxRates.localTaxRate * 100),
+                rateInputTaxFree: taxRates.taxFreeAmount,
+                rateInputMinTax: taxRates.minTaxThreshold,
+                rateInputInsuranceDays: taxRates.insuranceMinDays,
+                rateInputPensionAge: taxRates.pensionExemptAge,
+                rateInputEmploymentAge: taxRates.employmentExemptAge
+            };
+            Object.keys(map).forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const v = map[id];
+                    el.value = Number.isInteger(v) ? v : parseFloat(v.toFixed(4));
+                }
+            });
+        }
+
+
         let currentDensity = 'normal'; // 'narrow', 'normal', 'wide'
 
         const DEFAULT_PROJECT_ID = "p_1";
@@ -1258,10 +1403,10 @@
                 exactAge -= 1; // 같은 달이지만 기준일이 생일 이전 → 생일 미도래
             }
 
-            // 만 60세 이상은 국민연금 징수 대상에서 법적 제외
-            const isPensionExempt = exactAge >= 60;
-            // 만 65세 이상은 고용보험(근로자부 실업급여 0.9%) 징수 대상에서 법적 제외
-            const isEmploymentExempt = exactAge >= 65;
+            // 국민연금 면제 연령(설정값) 이상은 국민연금 징수 대상에서 법적 제외
+            const isPensionExempt = exactAge >= taxRates.pensionExemptAge;
+            // 고용보험 면제 연령(설정값) 이상은 고용보험(근로자부 실업급여) 징수 대상에서 법적 제외
+            const isEmploymentExempt = exactAge >= taxRates.employmentExemptAge;
 
             const result = {
                 age: exactAge,
@@ -1433,8 +1578,10 @@
                 saveToLocalStorage();
             }
             
+            loadTaxRates();
             populateDropdowns();
             onProjectChange();
+            renderTaxRateInputs();
             lucide.createIcons();
         }
 
@@ -1885,7 +2032,7 @@
                     } else if (insuranceFilterVal === "employmentExempt") {
                         return isEmploymentExempt;
                     } else if (insuranceFilterVal === "insuranceTarget") {
-                        return finalDays >= 8;
+                        return finalDays >= taxRates.insuranceMinDays;
                     }
                     return true;
                 });
@@ -1995,16 +2142,16 @@
                 // 법적 면제 안내 배지 처리
                 const pensionBadge = isPensionExempt ? `<span class="block text-[11px] text-white bg-rose-500 font-bold rounded px-1 mt-0.5 leading-tight">연금면제</span>` : '';
                 const employBadge = isEmploymentExempt ? `<span class="block text-[11px] text-white bg-orange-500 font-bold rounded px-1 mt-0.5 leading-tight">고용면제</span>` : '';
-                const incomeTaxBadge = (calc.incomeTax === 0 && labor.price > 150000) ? `<span class="block text-[10px] text-white bg-blue-400 font-bold rounded px-1 mt-0.5 leading-tight">소액부징수</span>` : '';
+                const incomeTaxBadge = (calc.incomeTax === 0 && labor.price > taxRates.taxFreeAmount) ? `<span class="block text-[10px] text-white bg-blue-400 font-bold rounded px-1 mt-0.5 leading-tight">소액부징수</span>` : '';
 
                 html += `
-                    <td class="p-0 border-r border-slate-200 bg-amber-50/50 print:border-black print:bg-white w-16 max-w-[64px]">
+                    <td class="p-0 border-r border-slate-200 bg-amber-50/50 print:border-black print:bg-white whitespace-nowrap">
                         <input type="number" step="0.1" value="${calc.effectiveDays}" 
                             onchange="updateLaborDays('${labor.id}', this.value)" 
                             class="w-full text-center font-extrabold bg-transparent border border-transparent hover:border-slate-300 rounded px-0.5 py-0.5 focus:ring-1 focus:ring-amber-500 ${hasManualDays ? 'text-amber-700 ring-1 ring-amber-400 bg-amber-100/50' : ''}"
                         >
                     </td>
-                    <td class="p-0 border-r border-slate-200 print:border-black w-24 max-w-[96px]">
+                    <td class="p-0 border-r border-slate-200 print:border-black whitespace-nowrap">
                         <input type="text" value="${commaFormatter(labor.price)}" 
                             onfocus="this.value = this.value.replace(/[^0-9]/g, '')"
                             onblur="this.value = this.value ? parseInt(this.value).toLocaleString() : ''"
@@ -2012,28 +2159,28 @@
                             class="w-full text-right bg-transparent border border-transparent hover:border-slate-300 font-extrabold rounded px-1 py-0.5 font-mono text-slate-800"
                         >
                     </td>
-                    <td class="${pad} border-r border-slate-200 text-right font-extrabold text-slate-900 font-mono print:border-black print:text-black w-28 max-w-[112px]" data-result-labor="${labor.id}" data-result-field="totalWages">${commaFormatter(calc.totalWages)}</td>
+                    <td class="${pad} border-r border-slate-200 text-right font-extrabold text-slate-900 font-mono print:border-black print:text-black whitespace-nowrap" data-result-labor="${labor.id}" data-result-field="totalWages">${commaFormatter(calc.totalWages)}</td>
                     
-                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600 w-20 max-w-[80px]">
+                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600 whitespace-nowrap">
                         <span class="block font-semibold" data-result-labor="${labor.id}" data-result-field="incomeTax">${commaFormatter(calc.incomeTax)}</span>
                         <span class="text-[8px] text-slate-400 block" data-result-labor="${labor.id}" data-result-field="localTax">${commaFormatter(calc.localTax)}</span>
                         ${incomeTaxBadge}
                     </td>
-                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600 w-20 max-w-[80px]">
+                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600 whitespace-nowrap">
                         <span class="block" data-result-labor="${labor.id}" data-result-field="employment">${commaFormatter(calc.employment)}</span>
                         ${employBadge}
                     </td>
-                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600 w-20 max-w-[80px]">
+                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600 whitespace-nowrap">
                         <span class="block font-semibold" data-result-labor="${labor.id}" data-result-field="health">${commaFormatter(calc.health)}</span>
                         <span class="text-[8px] text-slate-400 block" data-result-labor="${labor.id}" data-result-field="care">${commaFormatter(calc.care)}</span>
                     </td>
-                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600 w-20 max-w-[80px]">
+                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600 whitespace-nowrap">
                         <span class="block" data-result-labor="${labor.id}" data-result-field="pension">${commaFormatter(calc.pension)}</span>
                         ${pensionBadge}
                     </td>
                     
-                    <td class="${pad} border-r border-slate-200 text-right font-bold text-red-600 font-mono print:border-black print:text-black w-24 max-w-[96px]" data-result-labor="${labor.id}" data-result-field="totalDeduction">${commaFormatter(calc.totalDeduction)}</td>
-                    <td class="${pad} border-r border-slate-200 text-right font-black text-blue-700 bg-blue-50/20 font-mono print:border-black print:text-black w-28 max-w-[112px]" data-result-labor="${labor.id}" data-result-field="netPay">${commaFormatter(calc.netPay)}</td>
+                    <td class="${pad} border-r border-slate-200 text-right font-bold text-red-600 font-mono print:border-black print:text-black whitespace-nowrap" data-result-labor="${labor.id}" data-result-field="totalDeduction">${commaFormatter(calc.totalDeduction)}</td>
+                    <td class="${pad} border-r border-slate-200 text-right font-black text-blue-700 bg-blue-50/20 font-mono print:border-black print:text-black whitespace-nowrap" data-result-labor="${labor.id}" data-result-field="netPay">${commaFormatter(calc.netPay)}</td>
                     
                     <td class="p-1 no-print flex items-center justify-center gap-1">
                         <button onclick="printContractInNewTab('${labor.id}')" class="text-blue-600 hover:text-white hover:bg-blue-600 border border-blue-500 rounded px-1 py-0.5 font-bold text-[9.5px] transition-all" title="표준 일용 근로 계약서">
@@ -2498,7 +2645,7 @@
                     const finalDays = (l.manualDays !== null && l.manualDays !== undefined) ? l.manualDays : autoDays;
                     if (insuranceFilterVal === "pensionExempt") return isPensionExempt;
                     if (insuranceFilterVal === "employmentExempt") return isEmploymentExempt;
-                    if (insuranceFilterVal === "insuranceTarget") return finalDays >= 8;
+                    if (insuranceFilterVal === "insuranceTarget") return finalDays >= taxRates.insuranceMinDays;
                     return true;
                 });
             }
@@ -2963,23 +3110,23 @@
             });
 
             html += `
-                <td class="${pad} border-r border-slate-300 font-black text-slate-900 print:border-black w-16 max-w-[64px]">${sumDays.toFixed(1)}</td>
-                <td class="${pad} border-r border-slate-300 font-bold print:border-black w-24 max-w-[96px]">-</td>
-                <td class="${pad} border-r border-slate-300 text-right font-black text-slate-900 font-mono print:border-black w-28 max-w-[112px]">${commaFormatter(sumWages)}</td>
+                <td class="${pad} border-r border-slate-300 font-black text-slate-900 print:border-black whitespace-nowrap">${sumDays.toFixed(1)}</td>
+                <td class="${pad} border-r border-slate-300 font-bold print:border-black whitespace-nowrap">-</td>
+                <td class="${pad} border-r border-slate-300 text-right font-black text-slate-900 font-mono print:border-black whitespace-nowrap">${commaFormatter(sumWages)}</td>
                 
-                <td class="${pad} border-r border-slate-300 text-right print:border-black text-[9px] font-mono w-20 max-w-[80px]">
+                <td class="${pad} border-r border-slate-300 text-right print:border-black text-[9px] font-mono whitespace-nowrap">
                     <span class="block">${commaFormatter(sumIncomeTax)}</span>
                     <span class="text-[8px] text-slate-400 block">${commaFormatter(sumLocalTax)}</span>
                 </td>
-                <td class="${pad} border-r border-slate-300 text-right print:border-black font-mono text-slate-700 w-20 max-w-[80px]">${commaFormatter(sumEmployment)}</td>
-                <td class="${pad} border-r border-slate-300 text-right print:border-black text-[9px] font-mono w-20 max-w-[80px]">
+                <td class="${pad} border-r border-slate-300 text-right print:border-black font-mono text-slate-700 whitespace-nowrap">${commaFormatter(sumEmployment)}</td>
+                <td class="${pad} border-r border-slate-300 text-right print:border-black text-[9px] font-mono whitespace-nowrap">
                     <span class="block">${commaFormatter(sumHealth)}</span>
                     <span class="text-[8px] text-slate-400 block">${commaFormatter(sumCare)}</span>
                 </td>
-                <td class="${pad} border-r border-slate-300 text-right print:border-black font-mono text-slate-700 w-20 max-w-[80px]">${commaFormatter(sumPension)}</td>
+                <td class="${pad} border-r border-slate-300 text-right print:border-black font-mono text-slate-700 whitespace-nowrap">${commaFormatter(sumPension)}</td>
                 
-                <td class="${pad} border-r border-slate-300 text-right font-black text-red-600 font-mono print:border-black w-24 max-w-[96px]">${commaFormatter(sumDeduction)}</td>
-                <td class="${pad} border-r border-slate-300 text-right font-black text-blue-700 font-mono print:border-black w-28 max-w-[112px]">${commaFormatter(sumNetPay)}</td>
+                <td class="${pad} border-r border-slate-300 text-right font-black text-red-600 font-mono print:border-black whitespace-nowrap">${commaFormatter(sumDeduction)}</td>
+                <td class="${pad} border-r border-slate-300 text-right font-black text-blue-700 font-mono print:border-black whitespace-nowrap">${commaFormatter(sumNetPay)}</td>
                 <td class="p-1 no-print bg-blue-100"></td>
             `;
 
@@ -4154,28 +4301,28 @@
             let localTax = 0;
 
             if (totalWages > 0) {
-                // 고용보험 (실업급여): 근로자부 요율 0.9% 전체 적용 (법적 고용보험 만65세 이상 취득자는 실업급여부 면제)
+                // 고용보험 (실업급여): 근로자부 요율 적용 (고용보험 면제 연령 이상 취득자는 실업급여부 면제)
                 if (!isEmploymentExempt) {
-                    employment = Math.floor(totalWages * 0.009);
+                    employment = Math.floor(totalWages * taxRates.employmentRate);
                 }
 
-                // 국민, 건강, 장기요양 (월 8일 이상 근로 시 정규 취득 대상이 됨)
-                if (effectiveDays >= 8) {
-                    // 국민연금: 근로자 요율 4.5% 적용 (법적 국민연금 만60세 이상은 납부 예외)
+                // 국민, 건강, 장기요양 (설정된 최소 근로일수 이상 근로 시 정규 취득 대상이 됨)
+                if (effectiveDays >= taxRates.insuranceMinDays) {
+                    // 국민연금: 근로자 요율 적용 (국민연금 면제 연령 이상은 납부 예외)
                     if (!isPensionExempt) {
-                        pension = Math.floor(totalWages * 0.045);
+                        pension = Math.floor(totalWages * taxRates.pensionRate);
                     }
-                    health = Math.floor(totalWages * 0.03545);
-                    care = Math.floor(health * 0.1295);
+                    health = Math.floor(totalWages * taxRates.healthRate);
+                    care = Math.floor(health * taxRates.careRate);
                 }
 
-                // 2026 일용직 소득세 일별 소액부징수 법령 정밀 준수
-                // (일당 - 15만원 비과세 공제 후 원천세율 2.7% 적용 시, 일별 소득세액이 1,000원 미만이면 전액 0원 징수 제외)
-                if (labor.price > 150000) {
-                    const dailyCalculatedTax = Math.floor((labor.price - 150000) * 0.027);
+                // 일용직 소득세 일별 소액부징수 법령 정밀 준수
+                // (일당 - 비과세 공제 후 원천세율 적용 시, 일별 소득세액이 소액부징수 기준 미만이면 전액 0원 징수 제외)
+                if (labor.price > taxRates.taxFreeAmount) {
+                    const dailyCalculatedTax = Math.floor((labor.price - taxRates.taxFreeAmount) * taxRates.incomeTaxRate);
                     
-                    if (dailyCalculatedTax >= 1000) {
-                        const dailyLocalTax = Math.floor(dailyCalculatedTax * 0.1);
+                    if (dailyCalculatedTax >= taxRates.minTaxThreshold) {
+                        const dailyLocalTax = Math.floor(dailyCalculatedTax * taxRates.localTaxRate);
                         incomeTax = dailyCalculatedTax * effectiveDays;
                         localTax = dailyLocalTax * effectiveDays;
                     }
@@ -4964,7 +5111,7 @@ ${xlsRows}
                 let days = 0;
                 for (let d = 1; d <= daysInMonth; d++) days += Number(l.attendance[d] || 0);
                 const effective = (l.manualDays !== null && l.manualDays !== undefined) ? l.manualDays : days;
-                return effective >= 8;
+                return effective >= taxRates.insuranceMinDays;
             });
 
             document.getElementById('insuranceReportCount').textContent = `총 ${targets.length}명 (8일 이상 근무자)`;
