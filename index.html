@@ -1998,13 +1998,13 @@
                 const incomeTaxBadge = (calc.incomeTax === 0 && labor.price > 150000) ? `<span class="block text-[10px] text-white bg-blue-400 font-bold rounded px-1 mt-0.5 leading-tight">소액부징수</span>` : '';
 
                 html += `
-                    <td class="p-0 border-r border-slate-200 bg-amber-50/50 print:border-black print:bg-white">
+                    <td class="p-0 border-r border-slate-200 bg-amber-50/50 print:border-black print:bg-white w-16 max-w-[64px]">
                         <input type="number" step="0.1" value="${calc.effectiveDays}" 
                             onchange="updateLaborDays('${labor.id}', this.value)" 
                             class="w-full text-center font-extrabold bg-transparent border border-transparent hover:border-slate-300 rounded px-0.5 py-0.5 focus:ring-1 focus:ring-amber-500 ${hasManualDays ? 'text-amber-700 ring-1 ring-amber-400 bg-amber-100/50' : ''}"
                         >
                     </td>
-                    <td class="p-0 border-r border-slate-200 print:border-black">
+                    <td class="p-0 border-r border-slate-200 print:border-black w-24 max-w-[96px]">
                         <input type="text" value="${commaFormatter(labor.price)}" 
                             onfocus="this.value = this.value.replace(/[^0-9]/g, '')"
                             onblur="this.value = this.value ? parseInt(this.value).toLocaleString() : ''"
@@ -2012,7 +2012,7 @@
                             class="w-full text-right bg-transparent border border-transparent hover:border-slate-300 font-extrabold rounded px-1 py-0.5 font-mono text-slate-800"
                         >
                     </td>
-                    <td class="${pad} border-r border-slate-200 text-right font-extrabold text-slate-900 font-mono print:border-black print:text-black" data-result-labor="${labor.id}" data-result-field="totalWages">${commaFormatter(calc.totalWages)}</td>
+                    <td class="${pad} border-r border-slate-200 text-right font-extrabold text-slate-900 font-mono print:border-black print:text-black w-28 max-w-[112px]" data-result-labor="${labor.id}" data-result-field="totalWages">${commaFormatter(calc.totalWages)}</td>
                     
                     <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600 w-20 max-w-[80px]">
                         <span class="block font-semibold" data-result-labor="${labor.id}" data-result-field="incomeTax">${commaFormatter(calc.incomeTax)}</span>
@@ -2033,7 +2033,7 @@
                     </td>
                     
                     <td class="${pad} border-r border-slate-200 text-right font-bold text-red-600 font-mono print:border-black print:text-black w-24 max-w-[96px]" data-result-labor="${labor.id}" data-result-field="totalDeduction">${commaFormatter(calc.totalDeduction)}</td>
-                    <td class="${pad} border-r border-slate-200 text-right font-black text-blue-700 bg-blue-50/20 font-mono print:border-black print:text-black" data-result-labor="${labor.id}" data-result-field="netPay">${commaFormatter(calc.netPay)}</td>
+                    <td class="${pad} border-r border-slate-200 text-right font-black text-blue-700 bg-blue-50/20 font-mono print:border-black print:text-black w-28 max-w-[112px]" data-result-labor="${labor.id}" data-result-field="netPay">${commaFormatter(calc.netPay)}</td>
                     
                     <td class="p-1 no-print flex items-center justify-center gap-1">
                         <button onclick="printContractInNewTab('${labor.id}')" class="text-blue-600 hover:text-white hover:bg-blue-600 border border-blue-500 rounded px-1 py-0.5 font-bold text-[9.5px] transition-all" title="표준 일용 근로 계약서">
@@ -2963,23 +2963,23 @@
             });
 
             html += `
-                <td class="${pad} border-r border-slate-300 font-black text-slate-900 print:border-black">${sumDays.toFixed(1)}</td>
-                <td class="${pad} border-r border-slate-300 font-bold print:border-black">-</td>
-                <td class="${pad} border-r border-slate-300 text-right font-black text-slate-900 font-mono print:border-black">${commaFormatter(sumWages)}</td>
+                <td class="${pad} border-r border-slate-300 font-black text-slate-900 print:border-black w-16 max-w-[64px]">${sumDays.toFixed(1)}</td>
+                <td class="${pad} border-r border-slate-300 font-bold print:border-black w-24 max-w-[96px]">-</td>
+                <td class="${pad} border-r border-slate-300 text-right font-black text-slate-900 font-mono print:border-black w-28 max-w-[112px]">${commaFormatter(sumWages)}</td>
                 
-                <td class="${pad} border-r border-slate-300 text-right print:border-black text-[9px] font-mono">
+                <td class="${pad} border-r border-slate-300 text-right print:border-black text-[9px] font-mono w-20 max-w-[80px]">
                     <span class="block">${commaFormatter(sumIncomeTax)}</span>
                     <span class="text-[8px] text-slate-400 block">${commaFormatter(sumLocalTax)}</span>
                 </td>
-                <td class="${pad} border-r border-slate-300 text-right print:border-black font-mono text-slate-700">${commaFormatter(sumEmployment)}</td>
-                <td class="${pad} border-r border-slate-300 text-right print:border-black text-[9px] font-mono">
+                <td class="${pad} border-r border-slate-300 text-right print:border-black font-mono text-slate-700 w-20 max-w-[80px]">${commaFormatter(sumEmployment)}</td>
+                <td class="${pad} border-r border-slate-300 text-right print:border-black text-[9px] font-mono w-20 max-w-[80px]">
                     <span class="block">${commaFormatter(sumHealth)}</span>
                     <span class="text-[8px] text-slate-400 block">${commaFormatter(sumCare)}</span>
                 </td>
-                <td class="${pad} border-r border-slate-300 text-right print:border-black font-mono text-slate-700">${commaFormatter(sumPension)}</td>
+                <td class="${pad} border-r border-slate-300 text-right print:border-black font-mono text-slate-700 w-20 max-w-[80px]">${commaFormatter(sumPension)}</td>
                 
-                <td class="${pad} border-r border-slate-300 text-right font-black text-red-600 font-mono print:border-black">${commaFormatter(sumDeduction)}</td>
-                <td class="${pad} border-r border-slate-300 text-right font-black text-blue-700 font-mono print:border-black">${commaFormatter(sumNetPay)}</td>
+                <td class="${pad} border-r border-slate-300 text-right font-black text-red-600 font-mono print:border-black w-24 max-w-[96px]">${commaFormatter(sumDeduction)}</td>
+                <td class="${pad} border-r border-slate-300 text-right font-black text-blue-700 font-mono print:border-black w-28 max-w-[112px]">${commaFormatter(sumNetPay)}</td>
                 <td class="p-1 no-print bg-blue-100"></td>
             `;
 
