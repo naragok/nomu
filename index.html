@@ -100,11 +100,20 @@
             <span class="text-sm font-black tracking-tight">일용노무비 & 필수 서류 시스템 (2026)</span>
         </div>
         <div class="flex items-center gap-2">
+            <button id="toggleAllWeeksBtn" onclick="toggleAllWeeks()" class="bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="출근일자(1일~말일) 전체를 한 번에 접거나 펼칩니다">
+                <i data-lucide="fold-vertical" class="w-3.5 h-3.5"></i> 일자 전체접기
+            </button>
             <button onclick="openInsuranceReportModal()" class="bg-teal-600 hover:bg-teal-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="8일 이상 근무자 4대보험 취득신고서 출력">
                 <i data-lucide="file-text" class="w-3.5 h-3.5"></i> 보험신고
             </button>
             <button onclick="openCarryOverModal()" class="bg-violet-600 hover:bg-violet-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="현재 근로자를 다음달 대장으로 이월">
                 <i data-lucide="calendar-arrow-right" class="w-3.5 h-3.5"></i> 이월
+            </button>
+            <button onclick="openMoveLaborModal()" class="bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="선택한 근로자를 같은 달 다른 대장(현장)으로 이동">
+                <i data-lucide="move" class="w-3.5 h-3.5"></i> 인원이동
+            </button>
+            <button onclick="openWorkerDbModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="모든 대장에 등록된 근로자 인적사항을 모아본 공통 DB(주소록)">
+                <i data-lucide="users" class="w-3.5 h-3.5"></i> 근로자DB
             </button>
             <button onclick="copyToClipboardForExcel()" class="bg-slate-700 hover:bg-slate-800 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="엑셀에 바로 붙여넣기 가능한 규격으로 복사합니다.">
                 <i data-lucide="clipboard-copy" class="w-3.5 h-3.5"></i> 엑셀용 복사
@@ -175,7 +184,14 @@
                 </div>
                 <form id="newLaborForm" onsubmit="addLabor(event)" class="space-y-2">
                     <div class="grid grid-cols-2 gap-2">
-                        <input type="text" id="newName" placeholder="성명" required class="w-full border border-slate-200 rounded p-1.5 focus:ring-1 focus:ring-blue-500 outline-none font-bold">
+                        <div class="relative">
+                            <input type="text" id="newName" placeholder="성명" required autocomplete="off"
+                                oninput="handleNewNameInput()"
+                                onfocus="handleNewNameInput()"
+                                onblur="setTimeout(hideNewNameSuggestions, 150)"
+                                class="w-full border border-slate-200 rounded p-1.5 focus:ring-1 focus:ring-blue-500 outline-none font-bold">
+                            <div id="newNameSuggestions" class="hidden absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto text-xs"></div>
+                        </div>
                         <input type="text" id="newJob" placeholder="직종 (예: 보통인부)" class="w-full border border-slate-200 rounded p-1.5 focus:ring-1 focus:ring-blue-500 outline-none">
                     </div>
                     <div>
@@ -386,12 +402,13 @@
             <div class="table-container flex-1 overflow-auto bg-slate-50">
                 <table class="w-full text-left border-collapse min-w-[2200px] bg-white" id="paymentTable">
                     <thead>
-                        <tr class="bg-slate-200/90 text-[10px] font-bold text-slate-700 border-b border-slate-300 text-center select-none sticky top-0 z-10 print:bg-slate-200 print:text-black print:border-black">
+                        <tr id="attendanceHeaderRow" class="bg-slate-200/90 text-[10px] font-bold text-slate-700 border-b border-slate-300 text-center select-none sticky top-0 z-10 print:bg-slate-200 print:text-black print:border-black">
                             <th rowspan="2" class="p-1 border-r border-slate-300 w-10 sticky left-0 bg-slate-200 z-20 print:border-black">NO</th>
                             <th rowspan="2" class="p-1 border-r border-slate-300 w-24 sticky left-[40px] bg-slate-200 z-20 print:border-black">성명</th>
                             <th rowspan="2" class="p-1 border-r border-slate-300 w-32 print:border-black">주민등록번호</th>
                             <th rowspan="2" class="p-1 border-r border-slate-300 w-20 print:border-black">직종</th>
-                            <th colspan="31" class="p-0.5 border-r border-slate-300 tracking-wider print:border-black">출 근 일 자 (1일 ~ 31일)</th>
+                            <th id="attendanceGroupAnchor" style="display:none;"></th>
+                            <th colspan="31" id="attendanceGroupHeaderCell" class="attn-group-th p-0.5 border-r border-slate-300 tracking-wider print:border-black">출 근 일 자 (1일 ~ 31일)</th>
                             <th rowspan="2" class="p-1 border-r border-slate-300 w-16 print:border-black">일수</th>
                             <th rowspan="2" class="p-1 border-r border-slate-300 w-24 print:border-black">단가</th>
                             <th rowspan="2" class="p-1 border-r border-slate-300 w-28 print:border-black">총액</th>
@@ -834,11 +851,105 @@
                 <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-[10px] text-amber-800">
                     <p>💡 이월할 대장이 없다면 먼저 <strong>"신규 등록"</strong>으로 다음달 현장을 만들어주세요.</p>
                 </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1 text-[10px]">일괄 변경 단가 (선택)</label>
+                        <input type="text" id="carryOverNewPrice" placeholder="비우면 기존 단가 유지" class="w-full bg-slate-50 border border-slate-200 rounded p-2 font-mono focus:ring-1 focus:ring-violet-500 outline-none text-xs"
+                            oninput="this.value = this.value.replace(/[^0-9]/g,'') ? parseInt(this.value.replace(/[^0-9]/g,'')).toLocaleString() : ''">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1 text-[10px]">일괄 변경 직종 (선택)</label>
+                        <input type="text" id="carryOverNewJob" placeholder="비우면 기존 직종 유지" class="w-full bg-slate-50 border border-slate-200 rounded p-2 focus:ring-1 focus:ring-violet-500 outline-none text-xs">
+                    </div>
+                </div>
                 <div id="carryOverPreview" class="text-xs text-slate-600 font-semibold"></div>
             </div>
             <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2 text-xs">
                 <button onclick="closeCarryOverModal()" class="px-4 py-2 font-medium text-slate-500 hover:text-slate-800">취소</button>
                 <button onclick="executeCarryOver()" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-4 py-2 rounded shadow-sm">✅ 이월 실행</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 팝업 모달 7b: 같은 달 대장 간 인원 이동 (no-print) -->
+    <div id="moveLaborModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center z-50 no-print">
+        <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden max-h-[85vh] flex flex-col">
+            <div class="bg-gradient-to-r from-fuchsia-700 to-pink-700 text-white p-4 flex justify-between items-center shrink-0">
+                <h3 class="font-bold flex items-center gap-2">
+                    <i data-lucide="move" class="w-4 h-4"></i> 같은 달 대장 간 인원 이동
+                </h3>
+                <button onclick="closeMoveLaborModal()" class="text-fuchsia-200 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4 overflow-y-auto">
+                <div class="bg-fuchsia-50 border border-fuchsia-200 rounded-lg p-3 text-xs text-fuchsia-800">
+                    <p class="font-bold mb-1">📋 인원 이동 안내</p>
+                    <p>체크한 근로자를 <strong>같은 연/월</strong>의 다른 대장(현장)으로 옮깁니다. 출근 기록을 포함한 전체 정보가 함께 이동되며, 현재 대장에서는 삭제됩니다.</p>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1 text-[10px]">이동할 근로자 선택</label>
+                    <div class="flex gap-1 mb-1.5">
+                        <input type="text" id="moveLaborSearch" oninput="filterMoveLaborList()" placeholder="이름/직종 검색" class="flex-1 bg-slate-50 border border-slate-200 rounded p-1.5 text-xs outline-none focus:ring-1 focus:ring-fuchsia-500">
+                        <button onclick="selectAllMoveLabors()" class="px-2 py-1 text-[10px] font-bold bg-slate-100 hover:bg-slate-200 rounded">전체</button>
+                        <button onclick="deselectAllMoveLabors()" class="px-2 py-1 text-[10px] font-bold bg-slate-100 hover:bg-slate-200 rounded">해제</button>
+                    </div>
+                    <div id="moveLaborCheckboxList" class="border border-slate-200 rounded-lg max-h-48 overflow-y-auto divide-y divide-slate-100"></div>
+                    <div id="moveLaborSelectedCount" class="text-[10px] text-slate-400 font-semibold mt-1 text-right"></div>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1 text-[10px]">공정 필터</label>
+                    <select id="moveLaborWorkTypeFilter" onchange="_renderMoveLaborTargetOptions()" class="w-full bg-slate-50 border border-slate-200 rounded p-2 font-bold focus:ring-1 focus:ring-fuchsia-500 outline-none text-xs mb-2"></select>
+                    <label class="block font-bold text-slate-500 mb-1 text-[10px]">이동 대상 현장 선택 (같은 연/월)</label>
+                    <select id="moveLaborTargetProject" class="w-full bg-slate-50 border border-slate-200 rounded p-2 font-bold focus:ring-1 focus:ring-fuchsia-500 outline-none text-xs"></select>
+                </div>
+            </div>
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2 text-xs shrink-0">
+                <button onclick="closeMoveLaborModal()" class="px-4 py-2 font-medium text-slate-500 hover:text-slate-800">취소</button>
+                <button onclick="executeMoveLabor()" class="bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-bold px-4 py-2 rounded shadow-sm">➡️ 이동 실행</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 팝업 모달 7c: 근로자 공통 DB(주소록) (no-print) -->
+    <div id="workerDbModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center z-50 no-print">
+        <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-3xl overflow-hidden max-h-[88vh] flex flex-col">
+            <div class="bg-gradient-to-r from-indigo-700 to-blue-700 text-white p-4 flex justify-between items-center shrink-0">
+                <h3 class="font-bold flex items-center gap-2">
+                    <i data-lucide="users" class="w-4 h-4"></i> 근로자 공통 DB(주소록)
+                    <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-normal">전체 대장 통합</span>
+                </h3>
+                <button onclick="closeWorkerDbModal()" class="text-indigo-200 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-4 border-b border-slate-100 shrink-0 flex items-center gap-2">
+                <input type="text" id="workerDbSearch" oninput="renderWorkerDbList()" placeholder="이름 / 직종 / 연락처 검색" class="flex-1 bg-slate-50 border border-slate-200 rounded p-2 text-xs outline-none focus:ring-1 focus:ring-indigo-500">
+                <span id="workerDbCount" class="text-[10px] text-slate-400 font-bold whitespace-nowrap"></span>
+            </div>
+            <div class="overflow-y-auto flex-1">
+                <table class="w-full text-xs">
+                    <thead class="bg-slate-50 sticky top-0">
+                        <tr class="text-slate-500 font-bold text-left">
+                            <th class="p-2 border-b border-slate-200">성명</th>
+                            <th class="p-2 border-b border-slate-200">직종</th>
+                            <th class="p-2 border-b border-slate-200">연락처</th>
+                            <th class="p-2 border-b border-slate-200">최근 단가</th>
+                            <th class="p-2 border-b border-slate-200">등록 이력(대장 수)</th>
+                            <th class="p-2 border-b border-slate-200 no-print"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="workerDbTableBody"></tbody>
+                </table>
+            </div>
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-xs shrink-0">
+                <span class="text-slate-400 text-[10px]">💡 "현재 대장에 추가"를 누르면 선택한 근로자가 출근 0일 상태로 현재 대장에 즉시 등록됩니다.</span>
+                <div class="flex gap-2">
+                    <button onclick="exportWorkerDbToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded shadow-sm flex items-center gap-1">
+                        <i data-lucide="file-down" class="w-3.5 h-3.5"></i> CSV로 내보내기
+                    </button>
+                    <button onclick="closeWorkerDbModal()" class="px-4 py-2 font-medium text-slate-500 hover:text-slate-800">닫기</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1252,6 +1363,7 @@
 
             newSsn.addEventListener('input', function(e) {
                 e.target.value = ssnHyphenFilter(e.target.value);
+                handleNewSsnInput();
             });
             newPhone.addEventListener('input', function(e) {
                 e.target.value = phoneHyphenFilter(e.target.value);
@@ -1531,6 +1643,170 @@
             updateHeaderAndTable();
         }
 
+        // ===== 출근일자 주차별 그룹화(접기/펼치기) 기능 =====
+        const WEEK_GROUP_SIZE = 7;
+        let collapsedWeeks = new Set(); // 접힌 주차 인덱스(1~5) 저장
+
+        function getWeeksMeta() {
+            const weeks = [];
+            for (let start = 1; start <= 31; start += WEEK_GROUP_SIZE) {
+                const end = Math.min(start + WEEK_GROUP_SIZE - 1, 31);
+                const days = [];
+                for (let d = start; d <= end; d++) days.push(d);
+                weeks.push({ index: weeks.length + 1, start, end, days });
+            }
+            return weeks;
+        }
+
+        // 화면에 표시할 "슬롯" 목록 생성: 펼쳐진 주는 일자별로, 연속으로 접힌 주들은 하나로 병합 (항상 31일 기준 정렬)
+        function getDaySlots() {
+            const weeks = getWeeksMeta();
+            const slots = [];
+            let i = 0;
+            while (i < weeks.length) {
+                if (collapsedWeeks.has(weeks[i].index)) {
+                    const merged = [];
+                    let j = i;
+                    while (j < weeks.length && collapsedWeeks.has(weeks[j].index)) { merged.push(weeks[j]); j++; }
+                    const start = merged[0].start;
+                    const end = merged[merged.length - 1].end;
+                    const days = merged.flatMap(w => w.days);
+                    const weekIndexes = merged.map(w => w.index);
+                    slots.push({ type: 'group', start, end, days, weekIndexes });
+                    i = j;
+                } else {
+                    weeks[i].days.forEach(d => slots.push({ type: 'day', day: d, week: weeks[i].index }));
+                    i++;
+                }
+            }
+            return slots;
+        }
+
+        function toggleWeekGroup(weekIndex) {
+            if (collapsedWeeks.has(weekIndex)) collapsedWeeks.delete(weekIndex);
+            else collapsedWeeks.add(weekIndex);
+            updateHeaderAndTable();
+        }
+
+        // 병합된 그룹(연속 접힘 구간)을 한 번에 펼침
+        function expandWeekRange(weekIndexes) {
+            weekIndexes.forEach(idx => collapsedWeeks.delete(idx));
+            updateHeaderAndTable();
+        }
+
+        // 1일 ~ 말일까지 전체 출근일자를 한 번에 접거나 펼침 (모두 접으면 하나의 칼럼으로 병합됨)
+        function toggleAllWeeks() {
+            const weeks = getWeeksMeta();
+            const allCollapsed = weeks.every(w => collapsedWeeks.has(w.index));
+            if (allCollapsed) {
+                collapsedWeeks.clear();
+            } else {
+                weeks.forEach(w => collapsedWeeks.add(w.index));
+            }
+            updateHeaderAndTable();
+        }
+
+        function updateToggleAllWeeksBtn() {
+            const btn = document.getElementById('toggleAllWeeksBtn');
+            if (!btn) return;
+            const weeks = getWeeksMeta();
+            const allCollapsed = weeks.length > 0 && weeks.every(w => collapsedWeeks.has(w.index));
+            btn.innerHTML = allCollapsed
+                ? `<i data-lucide="unfold-vertical" class="w-3.5 h-3.5"></i> 일자 전체펼치기`
+                : `<i data-lucide="fold-vertical" class="w-3.5 h-3.5"></i> 일자 전체접기`;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function getRangeAttendanceSum(labor, days, daysInMonth) {
+            let sum = 0;
+            days.forEach(d => { if (d <= daysInMonth && labor.attendance[d]) sum += Number(labor.attendance[d]); });
+            return sum;
+        }
+
+        // 1행: 출근일자 상단 그룹 헤더 (펼쳐진 주는 주별 colspan, 연속 접힘 구간은 하나로 병합되어 "1일~말일"까지 표시 가능)
+        function renderAttendanceGroupHeader() {
+            const weeks = getWeeksMeta();
+            let html = '';
+            let i = 0;
+            while (i < weeks.length) {
+                const w = weeks[i];
+
+                if (collapsedWeeks.has(w.index)) {
+                    const merged = [];
+                    let j = i;
+                    while (j < weeks.length && collapsedWeeks.has(weeks[j].index)) { merged.push(weeks[j]); j++; }
+                    const start = merged[0].start;
+                    const end = merged[merged.length - 1].end;
+                    const weekIndexes = merged.map(w2 => w2.index);
+                    const label = (start === 1 && merged[merged.length - 1].index === weeks.length)
+                        ? '1일 ~ 말일 (전체 접음)'
+                        : `${start}~${end}일`;
+                    html += `
+                        <th colspan="1" onclick="expandWeekRange([${weekIndexes.join(',')}])"
+                            class="attn-group-th p-0.5 border-r border-slate-300 tracking-wider print:border-black cursor-pointer select-none hover:bg-slate-300/70 transition-colors bg-slate-300/60"
+                            title="클릭하여 펼치기">
+                            ${label} <span class="text-[9px]">▶</span>
+                        </th>
+                    `;
+                    i = j;
+                } else {
+                    html += `
+                        <th colspan="${w.days.length}" onclick="toggleWeekGroup(${w.index})"
+                            class="attn-group-th p-0.5 border-r border-slate-300 tracking-wider print:border-black cursor-pointer select-none hover:bg-slate-300/70 transition-colors"
+                            title="클릭하여 접기">
+                            ${w.index}주(${w.start}~${w.end}일) <span class="text-[9px]">▼</span>
+                        </th>
+                    `;
+                    i++;
+                }
+            }
+            return html;
+        }
+
+        // 출근일자 상단 그룹 헤더 전체를 안전하게 교체 (이전에 남아있던 모든 주차 셀을 제거 후 새로 삽입)
+        function updateAttendanceGroupHeader() {
+            const headerRow = document.getElementById('attendanceHeaderRow');
+            if (!headerRow) return;
+            headerRow.querySelectorAll('.attn-group-th').forEach(el => el.remove());
+            const anchor = document.getElementById('attendanceGroupAnchor');
+            if (anchor) {
+                anchor.insertAdjacentHTML('afterend', renderAttendanceGroupHeader());
+            }
+        }
+
+        // 2행: 요일/일자 헤더 (슬롯 기반, 월말 빈 칸 처리 포함)
+        function renderDaysOfWeekHeaderRow(proj, daysInMonth) {
+            const weekDays = ["일", "월", "화", "수", "목", "금", "토"];
+            const slots = getDaySlots();
+            let html = '';
+            slots.forEach(slot => {
+                if (slot.type === 'group') {
+                    html += `
+                        <th class="w-10 border-r border-slate-200 p-0.5 print:border-black bg-slate-200/60 cursor-pointer hover:bg-slate-300/60"
+                            onclick="expandWeekRange([${slot.weekIndexes.join(',')}])" title="클릭하여 펼치기">
+                            <div class="text-[8px] opacity-75">${slot.start}~${slot.end}</div>
+                            <div class="text-[9px]">접힘</div>
+                        </th>
+                    `;
+                } else {
+                    const d = slot.day;
+                    if (d > daysInMonth) {
+                        html += `<th class="w-6 border-r border-slate-200 p-0.5 bg-slate-100/50 print:border-black"></th>`;
+                    } else {
+                        const dayName = weekDays[new Date(proj.year, proj.month - 1, d).getDay()];
+                        const colorClass = getDayOfWeekColorClass(proj.year, proj.month, d);
+                        html += `
+                            <th class="w-6 border-r border-slate-200 p-0.5 print:border-black ${colorClass}">
+                                <div class="text-[8px] opacity-75">${dayName}</div>
+                                <div>${d}</div>
+                            </th>
+                        `;
+                    }
+                }
+            });
+            return html;
+        }
+
         // 오늘 날짜 및 주말 요일 색상 판정
         function getDayOfWeekColorClass(year, month, day) {
             const date = new Date(year, month - 1, day);
@@ -1560,24 +1836,13 @@
             document.getElementById('viewPeriod').innerText = `${proj.year % 100}.${String(proj.month).padStart(2, '0')}.01 ~ ${proj.year % 100}.${String(proj.month).padStart(2, '0')}.${daysInMonth}`;
             document.getElementById('viewProjectName').innerText = `[${proj.workType}] ${proj.projectName}`;
 
+            // 출근일자 상단 그룹 헤더(주차별 colspan, 접기/펼치기 토글) 갱신
+            updateAttendanceGroupHeader();
+
             const daysOfWeekHeader = document.getElementById('daysOfWeekHeader');
-            daysOfWeekHeader.innerHTML = "";
-            const weekDays = ["일", "월", "화", "수", "목", "금", "토"];
-            
-            for (let d = 1; d <= 31; d++) {
-                if (d <= daysInMonth) {
-                    const dayName = weekDays[new Date(proj.year, proj.month - 1, d).getDay()];
-                    const colorClass = getDayOfWeekColorClass(proj.year, proj.month, d);
-                    daysOfWeekHeader.innerHTML += `
-                        <th class="w-6 border-r border-slate-200 p-0.5 print:border-black ${colorClass}">
-                            <div class="text-[8px] opacity-75">${dayName}</div>
-                            <div>${d}</div>
-                        </th>
-                    `;
-                } else {
-                    daysOfWeekHeader.innerHTML += `<th class="w-6 border-r border-slate-200 p-0.5 bg-slate-100/50 print:border-black"></th>`;
-                }
-            }
+            daysOfWeekHeader.innerHTML = renderDaysOfWeekHeaderRow(proj, daysInMonth);
+
+            updateToggleAllWeeksBtn();
 
             renderTableBody(proj, daysInMonth);
         }
@@ -1672,20 +1937,42 @@
 
                 let html = `
                     <td class="${pad} border-r border-slate-200 bg-slate-100 font-bold sticky left-0 z-10 print:bg-white print:border-black">${idx + 1}</td>
-                    <td class="${pad} border-r border-slate-200 font-black text-blue-600 cursor-pointer sticky left-[40px] bg-slate-50 hover:underline z-10 print:bg-white print:text-black print:border-black" onclick="openDetailModal('${labor.id}')">
+                    <td class="${pad} border-r border-slate-200 font-black text-blue-600 cursor-pointer sticky left-[40px] bg-slate-50 hover:underline z-10 print:bg-white print:text-black print:border-black group relative" onclick="openDetailModal('${labor.id}')">
                         <span class="block">${labor.name}</span>
                         <span class="block text-[8px] text-slate-400 font-normal">만 ${age}세</span>
                         ${visaBadge}
+                        <div class="hidden group-hover:flex flex-col gap-1 absolute left-0 top-full mt-1 w-[150px] bg-slate-800 text-white text-[10px] font-normal rounded-lg shadow-xl p-2 z-50 normal-case cursor-default" onclick="event.stopPropagation()">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-slate-300">국민연금</span>
+                                <span class="px-1.5 py-0.5 rounded font-bold ${isPensionExempt ? 'bg-rose-500 text-white' : 'bg-emerald-500 text-white'}">${isPensionExempt ? '면제' : '대상'}</span>
+                            </div>
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-slate-300">고용보험</span>
+                                <span class="px-1.5 py-0.5 rounded font-bold ${isEmploymentExempt ? 'bg-orange-500 text-white' : 'bg-emerald-500 text-white'}">${isEmploymentExempt ? '면제' : '대상'}</span>
+                            </div>
+                        </div>
                     </td>
                     <td class="${pad} border-r border-slate-200 font-mono text-[10px] tracking-wider print:border-black">${labor.ssn}</td>
                     <td class="${pad} border-r border-slate-200 text-slate-600 print:border-black">${labor.job || '보통인부'}</td>
                 `;
 
-                // 1일 ~ 31일 입력 필드 구성
-                for (let d = 1; d <= 31; d++) {
+                // 출근일자 입력 필드 구성 (주차 그룹 접힘 상태 반영)
+                const daySlots = getDaySlots();
+                daySlots.forEach(slot => {
+                    if (slot.type === 'group') {
+                        const rangeSum = getRangeAttendanceSum(labor, slot.days, daysInMonth);
+                        html += `
+                            <td class="border-r border-slate-200 p-0.5 bg-slate-200/40 text-center font-bold text-slate-500 cursor-pointer hover:bg-slate-300/50 print:border-black"
+                                onclick="expandWeekRange([${slot.weekIndexes.join(',')}])" title="${slot.start}~${slot.end}일 소계: ${rangeSum}일 (클릭하여 펼치기)">
+                                ${rangeSum > 0 ? rangeSum : '-'}
+                            </td>
+                        `;
+                        return;
+                    }
+                    const d = slot.day;
                     const isDayValid = d <= daysInMonth;
                     const val = isDayValid ? (labor.attendance[d] || 0) : "";
-                    
+
                     if (isDayValid) {
                         const colorClass = getDayOfWeekColorClass(proj.year, proj.month, d);
                         html += `
@@ -1703,7 +1990,7 @@
                     } else {
                         html += `<td class="border-r border-slate-200 p-0 bg-slate-100/50 print:border-black"></td>`;
                     }
-                }
+                });
 
                 // 법적 면제 안내 배지 처리
                 const pensionBadge = isPensionExempt ? `<span class="block text-[11px] text-white bg-rose-500 font-bold rounded px-1 mt-0.5 leading-tight">연금면제</span>` : '';
@@ -1727,25 +2014,25 @@
                     </td>
                     <td class="${pad} border-r border-slate-200 text-right font-extrabold text-slate-900 font-mono print:border-black print:text-black" data-result-labor="${labor.id}" data-result-field="totalWages">${commaFormatter(calc.totalWages)}</td>
                     
-                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600">
+                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600 w-20 max-w-[80px]">
                         <span class="block font-semibold" data-result-labor="${labor.id}" data-result-field="incomeTax">${commaFormatter(calc.incomeTax)}</span>
                         <span class="text-[8px] text-slate-400 block" data-result-labor="${labor.id}" data-result-field="localTax">${commaFormatter(calc.localTax)}</span>
                         ${incomeTaxBadge}
                     </td>
-                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600">
+                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600 w-20 max-w-[80px]">
                         <span class="block" data-result-labor="${labor.id}" data-result-field="employment">${commaFormatter(calc.employment)}</span>
                         ${employBadge}
                     </td>
-                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600">
+                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600 w-20 max-w-[80px]">
                         <span class="block font-semibold" data-result-labor="${labor.id}" data-result-field="health">${commaFormatter(calc.health)}</span>
                         <span class="text-[8px] text-slate-400 block" data-result-labor="${labor.id}" data-result-field="care">${commaFormatter(calc.care)}</span>
                     </td>
-                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600">
+                    <td class="${pad} border-r border-slate-200 text-right font-mono print:border-black text-slate-600 w-20 max-w-[80px]">
                         <span class="block" data-result-labor="${labor.id}" data-result-field="pension">${commaFormatter(calc.pension)}</span>
                         ${pensionBadge}
                     </td>
                     
-                    <td class="${pad} border-r border-slate-200 text-right font-bold text-red-600 font-mono print:border-black print:text-black" data-result-labor="${labor.id}" data-result-field="totalDeduction">${commaFormatter(calc.totalDeduction)}</td>
+                    <td class="${pad} border-r border-slate-200 text-right font-bold text-red-600 font-mono print:border-black print:text-black w-24 max-w-[96px]" data-result-labor="${labor.id}" data-result-field="totalDeduction">${commaFormatter(calc.totalDeduction)}</td>
                     <td class="${pad} border-r border-slate-200 text-right font-black text-blue-700 bg-blue-50/20 font-mono print:border-black print:text-black" data-result-labor="${labor.id}" data-result-field="netPay">${commaFormatter(calc.netPay)}</td>
                     
                     <td class="p-1 no-print flex items-center justify-center gap-1">
@@ -2653,14 +2940,27 @@
                 <td colspan="4" class="${pad} border-r border-slate-300 text-right font-black text-slate-900 sticky left-0 bg-blue-100 z-15 print:border-black font-sans">출역인원 합계</td>
             `;
 
-            for (let d = 1; d <= 31; d++) {
+            const daySlots = getDaySlots();
+            daySlots.forEach(slot => {
+                if (slot.type === 'group') {
+                    let rangeSum = 0;
+                    slot.days.forEach(d => { if (d <= daysInMonth) rangeSum += dailyCounts[d] || 0; });
+                    html += `
+                        <td class="p-0.5 border-r border-slate-200 bg-slate-300/40 text-center font-black text-[10px] text-slate-600 cursor-pointer hover:bg-slate-300/70 print:border-black"
+                            onclick="expandWeekRange([${slot.weekIndexes.join(',')}])" title="${slot.start}~${slot.end}일 합계: ${rangeSum}명 (클릭하여 펼치기)">
+                            ${rangeSum > 0 ? rangeSum : ''}
+                        </td>
+                    `;
+                    return;
+                }
+                const d = slot.day;
                 const isDayValid = d <= daysInMonth;
                 const bgClass = !isDayValid ? 'bg-slate-200/50' : '';
                 const displayVal = (isDayValid && dailyCounts[d] > 0) ? dailyCounts[d] : '';
                 const weekendClass = isDayValid ? getDayOfWeekColorClass(proj.year, proj.month, d) : "";
-                
+
                 html += `<td class="p-0.5 border-r border-slate-200 ${bgClass} ${weekendClass} text-center font-black text-[10px] print:border-black">${displayVal}</td>`;
-            }
+            });
 
             html += `
                 <td class="${pad} border-r border-slate-300 font-black text-slate-900 print:border-black">${sumDays.toFixed(1)}</td>
@@ -4840,6 +5140,8 @@ ${xlsRows}
 
             const sel = document.getElementById('carryOverTargetProject');
             sel.innerHTML = '';
+            document.getElementById('carryOverNewPrice').value = '';
+            document.getElementById('carryOverNewJob').value = '';
 
             // 현재 대장 제외한 다른 대장 목록
             let hasOther = false;
@@ -4878,8 +5180,17 @@ ${xlsRows}
             const tgtProj = appState.projects[targetId];
             if (!srcProj || !tgtProj) return;
 
+            const overridePriceRaw = document.getElementById('carryOverNewPrice').value.replace(/[^0-9]/g, '');
+            const overridePrice = overridePriceRaw ? parseInt(overridePriceRaw) : null;
+            const overrideJob = document.getElementById('carryOverNewJob').value.trim();
+
+            let confirmMsg = `[${tgtProj.company} ${tgtProj.year}년 ${tgtProj.month}월] 대장으로 근로자 ${srcProj.labors.length}명을 이월하겠습니까? 이미 동일 인원이 있으면 건너뜁니다.`;
+            if (overridePrice || overrideJob) {
+                confirmMsg += `\n(일괄 변경: ${overridePrice ? '단가 ' + overridePrice.toLocaleString() + '원' : ''}${overridePrice && overrideJob ? ', ' : ''}${overrideJob ? '직종 ' + overrideJob : ''})`;
+            }
+
             showCustomConfirm(
-                `[${tgtProj.company} ${tgtProj.year}년 ${tgtProj.month}월] 대장으로 근로자 ${srcProj.labors.length}명을 이월하겠습니까? 이미 동일 인원이 있으면 건너뜁니다.`,
+                confirmMsg,
                 () => {
                     let added = 0, skipped = 0;
                     srcProj.labors.forEach(l => {
@@ -4891,6 +5202,8 @@ ${xlsRows}
                             manualDays: null,
                             attendance: {}
                         };
+                        if (overridePrice) newLabor.price = overridePrice;
+                        if (overrideJob) newLabor.job = overrideJob;
                         for (let d = 1; d <= 31; d++) newLabor.attendance[d] = 0;
                         tgtProj.labors.push(newLabor);
                         added++;
@@ -4903,6 +5216,435 @@ ${xlsRows}
                     showToast(msg);
                 }
             );
+        }
+
+        // ============================================================
+        // 같은 달 대장 간 인원 이동
+        // ============================================================
+        let _moveLaborCandidates = [];
+
+        function openMoveLaborModal() {
+            const proj = appState.projects[appState.currentProjectId];
+            if (!proj) return;
+            if (!proj.labors || proj.labors.length === 0) {
+                showCustomAlert("이동할 근로자가 없습니다.");
+                return;
+            }
+
+            _renderMoveLaborList(proj.labors, '');
+            document.getElementById('moveLaborSearch').value = '';
+
+            // 같은 연/월의 다른 대장 후보 수집
+            _moveLaborCandidates = [];
+            Object.entries(appState.projects).forEach(([id, p]) => {
+                if (id === appState.currentProjectId) return;
+                if (p.year !== proj.year || p.month !== proj.month) return;
+                _moveLaborCandidates.push({
+                    id, workType: p.workType || '공정미상',
+                    label: `[${p.workType || '공정미상'}] ${p.company} · ${p.projectName}`
+                });
+            });
+
+            // 공정 필터 옵션 구성
+            const filterSel = document.getElementById('moveLaborWorkTypeFilter');
+            filterSel.innerHTML = '<option value="">전체 공정</option>';
+            const workTypes = [...new Set(_moveLaborCandidates.map(c => c.workType))];
+            workTypes.forEach(wt => {
+                const opt = document.createElement('option');
+                opt.value = wt;
+                opt.textContent = wt;
+                filterSel.appendChild(opt);
+            });
+
+            _renderMoveLaborTargetOptions();
+
+            document.getElementById('moveLaborModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function _renderMoveLaborTargetOptions() {
+            const wt = document.getElementById('moveLaborWorkTypeFilter').value;
+            const sel = document.getElementById('moveLaborTargetProject');
+            sel.innerHTML = '';
+            const filtered = wt ? _moveLaborCandidates.filter(c => c.workType === wt) : _moveLaborCandidates;
+
+            if (filtered.length === 0) {
+                sel.innerHTML = '<option value="">조건에 맞는 대장 없음 — 먼저 신규 등록 필요</option>';
+                return;
+            }
+            filtered.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.label;
+                sel.appendChild(opt);
+            });
+        }
+
+        function closeMoveLaborModal() {
+            document.getElementById('moveLaborModal').classList.add('hidden');
+        }
+
+        function _renderMoveLaborList(labors, keyword) {
+            const list = document.getElementById('moveLaborCheckboxList');
+            list.innerHTML = '';
+            const kw = keyword.trim().toLowerCase();
+            const filtered = kw
+                ? labors.filter(l => l.name.toLowerCase().includes(kw) || (l.job || '').toLowerCase().includes(kw))
+                : labors;
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="p-3 text-slate-400 text-center text-xs">검색 결과 없음</div>';
+                _updateMoveLaborSelectedCount();
+                return;
+            }
+
+            filtered.forEach(l => {
+                const row = document.createElement('label');
+                row.className = 'flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-fuchsia-50 transition-colors';
+                row.innerHTML = `
+                    <input type="checkbox" data-labor-id="${l.id}" class="move-labor-check accent-fuchsia-600 w-3.5 h-3.5 shrink-0"
+                        onchange="_updateMoveLaborSelectedCount()">
+                    <span class="font-bold text-slate-700 truncate"></span>
+                    <span class="text-slate-400 shrink-0"></span>
+                `;
+                const spans = row.querySelectorAll('span');
+                spans[0].textContent = l.name;
+                spans[1].textContent = l.job || '보통인부';
+                list.appendChild(row);
+            });
+            _updateMoveLaborSelectedCount();
+        }
+
+        function filterMoveLaborList() {
+            const proj = appState.projects[appState.currentProjectId];
+            if (!proj) return;
+            const kw = document.getElementById('moveLaborSearch').value;
+            _renderMoveLaborList(proj.labors, kw);
+        }
+
+        function _updateMoveLaborSelectedCount() {
+            const total   = document.querySelectorAll('#moveLaborCheckboxList .move-labor-check').length;
+            const checked = document.querySelectorAll('#moveLaborCheckboxList .move-labor-check:checked').length;
+            const el = document.getElementById('moveLaborSelectedCount');
+            el.textContent = total > 0 ? `${checked}/${total}명 선택` : '';
+        }
+
+        function selectAllMoveLabors() {
+            document.querySelectorAll('#moveLaborCheckboxList .move-labor-check').forEach(cb => { cb.checked = true; });
+            _updateMoveLaborSelectedCount();
+        }
+
+        function deselectAllMoveLabors() {
+            document.querySelectorAll('#moveLaborCheckboxList .move-labor-check').forEach(cb => { cb.checked = false; });
+            _updateMoveLaborSelectedCount();
+        }
+
+        function executeMoveLabor() {
+            const targetId = document.getElementById('moveLaborTargetProject').value;
+            if (!targetId) {
+                showCustomAlert("이동할 대상 대장을 선택해주세요. 먼저 같은 연/월의 현장을 등록하세요.");
+                return;
+            }
+
+            const checkedIds = Array.from(document.querySelectorAll('#moveLaborCheckboxList .move-labor-check:checked'))
+                .map(cb => cb.dataset.laborId);
+            if (checkedIds.length === 0) {
+                showCustomAlert("이동할 근로자를 한 명 이상 선택해주세요.");
+                return;
+            }
+
+            const srcProj = appState.projects[appState.currentProjectId];
+            const tgtProj = appState.projects[targetId];
+            if (!srcProj || !tgtProj) return;
+
+            showCustomConfirm(
+                `[${tgtProj.workType || '공정미상'}] ${tgtProj.company} · ${tgtProj.projectName} 대장으로 근로자 ${checkedIds.length}명을 이동하겠습니까? (현재 대장에서는 삭제됩니다)`,
+                () => {
+                    let moved = 0, skipped = 0;
+                    const remaining = [];
+
+                    srcProj.labors.forEach(l => {
+                        if (!checkedIds.includes(l.id)) { remaining.push(l); return; }
+                        const dup = tgtProj.labors.some(t => t.name === l.name && t.ssn === l.ssn);
+                        if (dup) { skipped++; remaining.push(l); return; }
+                        tgtProj.labors.push(JSON.parse(JSON.stringify(l)));
+                        moved++;
+                    });
+
+                    srcProj.labors = remaining;
+
+                    saveToLocalStorage();
+                    closeMoveLaborModal();
+                    updateHeaderAndTable();
+                    let msg = `✅ 이동 완료: ${moved}명`;
+                    if (skipped > 0) msg += ` (${skipped}명 대상 대장에 동일 인원 존재하여 제외)`;
+                    showToast(msg);
+                }
+            );
+        }
+
+        // ============================================================
+        // 근로자 공통 DB(주소록) — 모든 대장을 통합해 근로자 인적사항 모아보기
+        // ============================================================
+        let _workerDbCache = [];
+
+        function _buildWorkerDb() {
+            const map = new Map();
+            Object.values(appState.projects).forEach(p => {
+                const projLabel = `${p.company} · ${p.year}년 ${p.month}월 · ${p.projectName}`;
+                (p.labors || []).forEach(l => {
+                    if (!l.name) return;
+                    const key = (l.ssn && l.ssn.replace(/[^0-9]/g, '').length === 13) ? l.ssn : ('name_' + l.name);
+                    const existing = map.get(key);
+                    if (!existing) {
+                        map.set(key, {
+                            name: l.name, ssn: l.ssn, job: l.job, phone: l.phone,
+                            bank: l.bank, account: l.account, address: l.address,
+                            price: l.price, visa: l.visa, count: 1, projects: [projLabel]
+                        });
+                    } else {
+                        // 최근 등록 정보(연/월 기준 더 최신)로 갱신, 직종/단가/연락처 등 최신화
+                        existing.job = l.job || existing.job;
+                        existing.phone = l.phone || existing.phone;
+                        existing.bank = l.bank || existing.bank;
+                        existing.account = l.account || existing.account;
+                        existing.address = l.address || existing.address;
+                        existing.price = l.price || existing.price;
+                        existing.visa = l.visa || existing.visa;
+                        existing.count += 1;
+                        if (!existing.projects.includes(projLabel)) existing.projects.push(projLabel);
+                    }
+                });
+            });
+
+            const list = Array.from(map.values());
+
+            // 동일인 의심 탐지: 이름은 다른데 연락처 또는 계좌번호가 동일한 경우
+            const phoneMap = new Map(), accountMap = new Map();
+            list.forEach(w => {
+                if (w.phone) { if (!phoneMap.has(w.phone)) phoneMap.set(w.phone, new Set()); phoneMap.get(w.phone).add(w.name); }
+                if (w.account) { if (!accountMap.has(w.account)) accountMap.set(w.account, new Set()); accountMap.get(w.account).add(w.name); }
+            });
+            list.forEach(w => {
+                const phoneDup = w.phone && phoneMap.get(w.phone).size > 1;
+                const accountDup = w.account && accountMap.get(w.account).size > 1;
+                w.suspect = !!(phoneDup || accountDup);
+                w.suspectReason = phoneDup && accountDup ? '연락처·계좌 중복' : phoneDup ? '연락처 중복' : accountDup ? '계좌 중복' : '';
+            });
+
+            list.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+            return list;
+        }
+
+        // 신규 등록 폼 — 이름 입력 시 근로자DB 자동완성
+        function handleNewNameInput() {
+            const proj = appState.projects[appState.currentProjectId];
+            const kw = document.getElementById('newName').value.trim().toLowerCase();
+            const box = document.getElementById('newNameSuggestions');
+
+            if (!kw) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+
+            const db = _buildWorkerDb();
+            const matches = db.filter(w => w.name.toLowerCase().includes(kw)).slice(0, 6);
+
+            if (matches.length === 0) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+
+            box.innerHTML = '';
+            matches.forEach(w => {
+                const alreadyIn = proj && proj.labors.some(l => l.name === w.name && l.ssn === w.ssn);
+                const row = document.createElement('div');
+                row.className = 'px-2.5 py-1.5 hover:bg-blue-50 cursor-pointer border-b border-slate-100 last:border-b-0 flex items-center justify-between gap-2';
+                row.innerHTML = `
+                    <span class="truncate"><span class="font-bold text-slate-700"></span> <span class="text-slate-400"></span></span>
+                `;
+                const nameSpan = row.querySelector('span.font-bold');
+                const jobSpan = row.querySelector('span.text-slate-400');
+                nameSpan.textContent = w.name;
+                jobSpan.textContent = `· ${w.job || '보통인부'}${w.phone ? ' · ' + w.phone : ''}${alreadyIn ? ' (등록됨)' : ''}`;
+                row.addEventListener('mousedown', (e) => { e.preventDefault(); _applyNewNameSuggestion(w); });
+                box.appendChild(row);
+            });
+            box.classList.remove('hidden');
+        }
+
+        function _applyNewNameSuggestion(w) {
+            document.getElementById('newName').value = w.name;
+            document.getElementById('newJob').value = w.job || '';
+            document.getElementById('newSsn').value = w.ssn || '';
+            document.getElementById('newPhone').value = w.phone || '';
+            document.getElementById('newPrice').value = w.price ? Number(w.price).toLocaleString() : '';
+            document.getElementById('newBank').value = w.bank || '';
+            document.getElementById('newAccount').value = w.account || '';
+            document.getElementById('newAddress').value = w.address || '';
+            hideNewNameSuggestions();
+            showToast(`📋 근로자DB에서 ${w.name} 님 정보를 불러왔습니다.`);
+        }
+
+        function hideNewNameSuggestions() {
+            const box = document.getElementById('newNameSuggestions');
+            if (box) { box.classList.add('hidden'); box.innerHTML = ''; }
+        }
+
+        // 신규 등록 폼 — 주민번호 13자리 완성 시 근로자DB 매칭 자동완성
+        function handleNewSsnInput() {
+            const ssn = document.getElementById('newSsn').value.trim();
+            if (ssn.replace(/[^0-9]/g, '').length !== 13) return;
+
+            const db = _buildWorkerDb();
+            const match = db.find(w => w.ssn === ssn);
+            if (!match) return;
+
+            if (!document.getElementById('newName').value.trim()) {
+                document.getElementById('newName').value = match.name;
+            }
+            if (!document.getElementById('newJob').value.trim()) document.getElementById('newJob').value = match.job || '';
+            if (!document.getElementById('newPhone').value.trim()) document.getElementById('newPhone').value = match.phone || '';
+            if (!document.getElementById('newPrice').value.trim() && match.price) document.getElementById('newPrice').value = Number(match.price).toLocaleString();
+            if (!document.getElementById('newBank').value.trim()) document.getElementById('newBank').value = match.bank || '';
+            if (!document.getElementById('newAccount').value.trim()) document.getElementById('newAccount').value = match.account || '';
+            if (!document.getElementById('newAddress').value.trim()) document.getElementById('newAddress').value = match.address || '';
+            showToast(`📋 주민번호로 근로자DB에서 ${match.name} 님 정보를 불러왔습니다.`);
+        }
+
+        function openWorkerDbModal() {
+            _workerDbCache = _buildWorkerDb();
+            document.getElementById('workerDbSearch').value = '';
+            renderWorkerDbList();
+            document.getElementById('workerDbModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeWorkerDbModal() {
+            document.getElementById('workerDbModal').classList.add('hidden');
+        }
+
+        function renderWorkerDbList() {
+            const kw = document.getElementById('workerDbSearch').value.trim().toLowerCase();
+            const list = kw
+                ? _workerDbCache.filter(w =>
+                    w.name.toLowerCase().includes(kw) ||
+                    (w.job || '').toLowerCase().includes(kw) ||
+                    (w.phone || '').toLowerCase().includes(kw))
+                : _workerDbCache;
+
+            const tbody = document.getElementById('workerDbTableBody');
+            tbody.innerHTML = '';
+            document.getElementById('workerDbCount').textContent = `총 ${list.length}명`;
+
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-400 font-semibold">등록된 근로자 정보가 없습니다.</td></tr>';
+                return;
+            }
+
+            list.forEach((w, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-slate-100 hover:bg-indigo-50/50';
+
+                const tdName = document.createElement('td');
+                tdName.className = 'p-2 font-bold text-slate-700';
+                tdName.textContent = w.name;
+                if (w.suspect) {
+                    const badge = document.createElement('span');
+                    badge.className = 'ml-1 text-[9px] bg-rose-100 text-rose-600 font-bold px-1.5 py-0.5 rounded-full align-middle';
+                    badge.textContent = `⚠ ${w.suspectReason}`;
+                    badge.title = '다른 이름으로 등록되었지만 연락처 또는 계좌번호가 동일한 근로자가 있습니다. 오타로 중복 등록되지 않았는지 확인해 주세요.';
+                    tdName.appendChild(badge);
+                }
+
+                const tdJob = document.createElement('td');
+                tdJob.className = 'p-2 text-slate-600';
+                tdJob.textContent = w.job || '보통인부';
+
+                const tdPhone = document.createElement('td');
+                tdPhone.className = 'p-2 text-slate-600 font-mono';
+                tdPhone.textContent = w.phone || '-';
+
+                const tdPrice = document.createElement('td');
+                tdPrice.className = 'p-2 text-slate-600 font-mono';
+                tdPrice.textContent = w.price ? commaFormatter(w.price) + '원' : '-';
+
+                const tdCount = document.createElement('td');
+                tdCount.className = 'p-2 text-indigo-600 font-bold underline cursor-pointer';
+                tdCount.textContent = `${w.count}개 대장`;
+                tdCount.title = '클릭하면 등록된 대장 목록을 볼 수 있습니다';
+                tdCount.addEventListener('click', () => _showWorkerProjectList(w));
+
+                const tdBtn = document.createElement('td');
+                tdBtn.className = 'p-2 no-print text-right';
+                const btn = document.createElement('button');
+                btn.className = 'bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-[10px] font-bold';
+                btn.textContent = '현재 대장에 추가';
+                btn.addEventListener('click', () => _addWorkerFromDbToCurrentProject(idx, list));
+                tdBtn.appendChild(btn);
+
+                tr.append(tdName, tdJob, tdPhone, tdPrice, tdCount, tdBtn);
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 근로자DB — 특정 근로자가 등록된 전체 대장 목록 보기
+        function _showWorkerProjectList(w) {
+            const lines = (w.projects || []).map((p, i) => `${i + 1}. ${p}`).join('\n');
+            showCustomAlert(`${w.name} 님이 등록된 대장 (${w.projects.length}개)\n\n${lines}`);
+        }
+
+        // 근로자DB — CSV(엑셀 호환) 내보내기
+        function exportWorkerDbToCSV() {
+            if (!_workerDbCache || _workerDbCache.length === 0) {
+                showToast('내보낼 근로자DB 데이터가 없습니다.');
+                return;
+            }
+            let csv = "\uFEFF";
+            csv += "성명,직종,주민번호,연락처,은행명,계좌번호,주소,최근단가,등록대장수,동일인의심\n";
+            _workerDbCache.forEach(w => {
+                const addr = '"' + (w.address || '').replace(/"/g, '""') + '"';
+                csv += `${w.name},${w.job || '보통인부'},'${w.ssn || ''},${w.phone || ''},${w.bank || ''},'${w.account || ''},${addr},${w.price || ''},${w.count},${w.suspect ? w.suspectReason : ''}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `근로자DB_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showToast('근로자DB CSV 다운로드 완료');
+        }
+
+        function _addWorkerFromDbToCurrentProject(idx, list) {
+            const proj = appState.projects[appState.currentProjectId];
+            if (!proj) return;
+            const w = list[idx];
+            if (!w) return;
+
+            const dup = proj.labors.some(l => l.name === w.name && l.ssn === w.ssn);
+            if (dup) {
+                showCustomAlert(`${w.name} 님은 이미 현재 대장에 등록되어 있습니다.`);
+                return;
+            }
+
+            const newLabor = {
+                id: "l_" + (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '_' + Math.random().toString(36).substr(2, 9)),
+                name: w.name,
+                job: w.job || '보통인부',
+                ssn: w.ssn || '000000-0000000',
+                phone: w.phone || '',
+                bank: w.bank || '',
+                account: w.account || '',
+                safetyEdu: false,
+                address: w.address || '',
+                price: w.price || 180000,
+                visa: "대한민국",
+                manualDays: null,
+                attendance: {}
+            };
+            for (let d = 1; d <= 31; d++) newLabor.attendance[d] = 0;
+            proj.labors.push(newLabor);
+
+            saveToLocalStorage();
+            updateHeaderAndTable();
+            showToast(`✅ ${w.name} 님을 현재 대장에 등록했습니다.`);
         }
 
         // ============================================================
@@ -5184,21 +5926,34 @@ JSON 배열만 응답. 설명 없이.`;
                 return;
             }
 
-            let added = 0, skipped = 0;
+            let added = 0, skipped = 0, enriched = 0;
+            const db = _buildWorkerDb();
             aiScanData.forEach(p => {
                 const name = (p.name || '미상').trim();
-                const ssn = (p.ssn || '000000-0000000').replace(/[^0-9\-]/g, '');
+                let ssn = (p.ssn || '000000-0000000').replace(/[^0-9\-]/g, '');
                 const isDuplicate = proj.labors.some(l => l.name === name && l.ssn === ssn);
                 if (isDuplicate) { skipped++; return; }
 
+                // 근로자DB 매칭 — AI 인식 결과에 빠진 정보를 기존 등록 이력으로 보강
+                const dbMatch = db.find(w => w.name === name &&
+                    (ssn === '000000-0000000' || !p.ssn || w.ssn === ssn));
+                if (dbMatch) {
+                    enriched++;
+                    if (ssn === '000000-0000000' && dbMatch.ssn) ssn = dbMatch.ssn;
+                }
+
                 const newLabor = {
                     id: 'l_ai_' + (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '_' + Math.random().toString(36).substr(2, 9)),
-                    name, job: p.job || '보통인부', ssn,
-                    phone: p.phone || '', bank: p.bank || '',
-                    account: p.account || '', safetyEdu: false,
-                    address: p.address || '',
-                    price: parseInt(p.price) || 180000,
-                    visa: '대한민국', manualDays: null, attendance: {}
+                    name,
+                    job: p.job || (dbMatch && dbMatch.job) || '보통인부',
+                    ssn,
+                    phone: p.phone || (dbMatch && dbMatch.phone) || '',
+                    bank: p.bank || (dbMatch && dbMatch.bank) || '',
+                    account: p.account || (dbMatch && dbMatch.account) || '',
+                    safetyEdu: false,
+                    address: p.address || (dbMatch && dbMatch.address) || '',
+                    price: parseInt(p.price) || (dbMatch && dbMatch.price) || 180000,
+                    visa: (dbMatch && dbMatch.visa) || '대한민국', manualDays: null, attendance: {}
                 };
                 for (let d = 1; d <= 31; d++) newLabor.attendance[d] = 0;
                 proj.labors.push(newLabor);
@@ -5210,6 +5965,7 @@ JSON 배열만 응답. 설명 없이.`;
             closeAiScanModal();
 
             let toastMsg = `🤖 AI 인식 완료: ${added}명 대장 등록`;
+            if (enriched > 0) toastMsg += ` (${enriched}명 근로자DB 정보로 보강)`;
             if (skipped > 0) toastMsg += ` (${skipped}명 중복 제외)`;
             showToast(toastMsg);
         }
