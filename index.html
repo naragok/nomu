@@ -36,6 +36,12 @@
                 overflow: hidden;
             }
         }
+        /* 이름에 마우스를 올렸을 때 뜨는 공제요율 툴팁이 바로 아래 행의 sticky 칼럼에
+           가려지지 않도록, 마우스가 올라간 행 전체를 다른 행보다 위로 끌어올림 */
+        #laborList tr:hover {
+            position: relative;
+            z-index: 30;
+        }
         /* 인쇄 전용 CSS */
         @media print {
             .no-print { display: none !important; }
@@ -124,13 +130,16 @@
             <button onclick="exportToXLS()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all">
                 <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> XLS 저장
             </button>
-            <button onclick="triggerBackup()" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all">
+            <button onclick="triggerBackup()" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="백업 파일 다운로드 후 구글 드라이브 업로드 안내">
                 <i data-lucide="database-backup" class="w-3.5 h-3.5"></i> 백업
             </button>
             <label class="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 cursor-pointer transition-all font-sans">
                 <i data-lucide="folder-open" class="w-3.5 h-3.5"></i> 복구
                 <input type="file" id="backupFile" accept=".json" onchange="restoreBackup(event)" class="hidden">
             </label>
+            <button onclick="openGoogleDriveForRestore()" class="bg-sky-600 hover:bg-sky-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="구글 드라이브에서 백업 파일을 다운로드한 뒤 복구 버튼으로 불러오세요">
+                <i data-lucide="cloud" class="w-3.5 h-3.5"></i> 드라이브에서
+            </button>
             <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-800 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all">
                 <i data-lucide="printer" class="w-3.5 h-3.5"></i> 대장인쇄
             </button>
@@ -466,9 +475,9 @@
 
             <!-- 실시간 스케일이 조정되는 노무 대장 출력 테이블 본체 -->
             <div class="table-container flex-1 min-h-0 overflow-auto bg-slate-50">
-                <table class="w-full text-left border-collapse min-w-[2200px] bg-white" id="paymentTable">
+                <table class="w-full text-left border-collapse bg-white" id="paymentTable">
                     <thead>
-                        <tr id="attendanceHeaderRow" class="bg-slate-200/90 text-[10px] font-bold text-slate-700 border-b border-slate-300 text-center select-none sticky top-0 z-10 print:bg-slate-200 print:text-black print:border-black">
+                        <tr id="attendanceHeaderRow" class="bg-slate-200/90 text-[10px] font-bold text-slate-700 border-b border-slate-300 text-center select-none sticky top-0 z-40 print:bg-slate-200 print:text-black print:border-black">
                             <th rowspan="2" class="p-1 border-r border-slate-300 w-10 sticky left-0 bg-slate-200 z-20 print:border-black">NO</th>
                             <th rowspan="2" class="p-1 border-r border-slate-300 w-24 sticky left-[40px] bg-slate-200 z-20 print:border-black">성명</th>
                             <th rowspan="2" class="p-1 border-r border-slate-300 w-32 print:border-black">주민등록번호</th>
@@ -482,14 +491,14 @@
                             <th rowspan="2" class="p-1 border-r border-slate-300 whitespace-nowrap print:border-black">지급액<br><span class="text-[9px] font-normal">(실수령액)</span></th>
                             <th rowspan="2" class="p-1 w-52 no-print">필수 서류 발급 / 제어</th>
                         </tr>
-                        <tr id="daysOfWeekHeader" class="bg-slate-100 text-[9.5px] text-slate-600 border-b border-slate-300 text-center sticky top-[28px] z-10 print:bg-slate-100 print:text-black print:border-black">
+                        <tr id="daysOfWeekHeader" class="bg-slate-100 text-[9.5px] text-slate-600 border-b border-slate-300 text-center sticky top-[28px] z-40 print:bg-slate-100 print:text-black print:border-black">
                             <!-- 요일정보 및 1~31 숫자가 동적 요일색상(토/일)과 함께 렌더링됩니다. -->
                         </tr>
                     </thead>
                     <tbody id="laborList" class="transition-all">
                         <!-- JS를 통해 데이터 실시간 삽입 -->
                     </tbody>
-                    <tfoot class="sticky bottom-0 z-10">
+                    <tfoot class="sticky bottom-0 z-40">
                         <tr id="totalRow" class="bg-blue-100/90 font-extrabold text-[10.5px] text-slate-900 border-t-2 border-slate-300 text-center print:bg-slate-200 print:text-black print:border-black">
                             <!-- 합계 행 자동 계산 -->
                         </tr>
@@ -1425,7 +1434,7 @@
             const confirmBtn = document.getElementById('alertConfirmBtn');
             const cancelBtn = document.getElementById('alertCancelBtn');
 
-            msgEl.innerText = message;
+            msgEl.innerHTML = message;
             cancelBtn.classList.remove('hidden');
             modal.classList.remove('hidden');
 
@@ -1835,6 +1844,24 @@
             updateHeaderAndTable();
         }
 
+        // 출근일자 접힘 상태에 맞춰 테이블 전체 최소 너비를 동적으로 재계산
+        // (전체접기 시 불필요한 여백을 없애 한 화면에 필수서류까지 보이도록 함)
+        function applyTableMinWidth() {
+            const table = document.getElementById('paymentTable');
+            if (!table) return;
+            const FIXED_COLUMNS_WIDTH = 1180; // NO~필수서류까지 일자 제외 고정 칼럼들의 대략적 합계 너비(px)
+            const DAY_COL_WIDTH = 24;   // 펼쳐진 일자 칼럼 1개당 너비(px, w-6)
+            const GROUP_COL_WIDTH = 56; // 접힌 주차 그룹 칼럼 1개당 너비(px)
+
+            const slots = getDaySlots();
+            let dayAreaWidth = 0;
+            slots.forEach(slot => {
+                dayAreaWidth += (slot.type === 'group') ? GROUP_COL_WIDTH : DAY_COL_WIDTH;
+            });
+
+            table.style.minWidth = (FIXED_COLUMNS_WIDTH + dayAreaWidth) + 'px';
+        }
+
         // 병합된 그룹(연속 접힘 구간)을 한 번에 펼침
         function expandWeekRange(weekIndexes) {
             weekIndexes.forEach(idx => collapsedWeeks.delete(idx));
@@ -1990,6 +2017,7 @@
             daysOfWeekHeader.innerHTML = renderDaysOfWeekHeaderRow(proj, daysInMonth);
 
             updateToggleAllWeeksBtn();
+            applyTableMinWidth();
 
             renderTableBody(proj, daysInMonth);
         }
@@ -2148,7 +2176,7 @@
                     <td class="p-0 border-r border-slate-200 bg-amber-50/50 print:border-black print:bg-white whitespace-nowrap">
                         <input type="number" step="0.1" value="${calc.effectiveDays}" 
                             onchange="updateLaborDays('${labor.id}', this.value)" 
-                            class="w-full text-center font-extrabold bg-transparent border border-transparent hover:border-slate-300 rounded px-0.5 py-0.5 focus:ring-1 focus:ring-amber-500 ${hasManualDays ? 'text-amber-700 ring-1 ring-amber-400 bg-amber-100/50' : ''}"
+                            class="w-12 text-center font-extrabold bg-transparent border border-transparent hover:border-slate-300 rounded px-0.5 py-0.5 focus:ring-1 focus:ring-amber-500 ${hasManualDays ? 'text-amber-700 ring-1 ring-amber-400 bg-amber-100/50' : ''}"
                         >
                     </td>
                     <td class="p-0 border-r border-slate-200 print:border-black whitespace-nowrap">
@@ -2156,7 +2184,7 @@
                             onfocus="this.value = this.value.replace(/[^0-9]/g, '')"
                             onblur="this.value = this.value ? parseInt(this.value).toLocaleString() : ''"
                             onchange="updateLaborPrice('${labor.id}', this.value)" 
-                            class="w-full text-right bg-transparent border border-transparent hover:border-slate-300 font-extrabold rounded px-1 py-0.5 font-mono text-slate-800"
+                            class="w-20 text-right bg-transparent border border-transparent hover:border-slate-300 font-extrabold rounded px-1 py-0.5 font-mono text-slate-800"
                         >
                     </td>
                     <td class="${pad} border-r border-slate-200 text-right font-extrabold text-slate-900 font-mono print:border-black print:text-black whitespace-nowrap" data-result-labor="${labor.id}" data-result-field="totalWages">${commaFormatter(calc.totalWages)}</td>
@@ -3155,6 +3183,40 @@
         }
 
         // 1. 표준일용근로계약서 출력 페이지 생성
+        // 별도의 새 창/탭을 띄우지 않고, 화면에 보이지 않는 iframe에 문서를 렌더링한 뒤
+        // 그 iframe에서 바로 인쇄 대화상자를 띄우는 공용 헬퍼 함수
+        function printHtmlViaIframe(htmlContent) {
+            const old = document.getElementById('hiddenPrintFrame');
+            if (old) old.remove();
+
+            const iframe = document.createElement('iframe');
+            iframe.id = 'hiddenPrintFrame';
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            iframe.style.visibility = 'hidden';
+            document.body.appendChild(iframe);
+
+            iframe.onload = function () {
+                setTimeout(() => {
+                    try {
+                        iframe.contentWindow.focus();
+                        iframe.contentWindow.print();
+                    } catch (e) {
+                        showCustomAlert('인쇄 중 오류가 발생했습니다.');
+                    }
+                }, 200);
+            };
+
+            const doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(htmlContent);
+            doc.close();
+        }
+
         function printContractInNewTab(laborId) {
             const proj = appState.projects[appState.currentProjectId];
             const labor = proj.labors.find(l => l.id === laborId);
@@ -3165,13 +3227,7 @@
             const startDate = `${proj.year}년 ${proj.month}월 ${firstDay}일`;
             const endDate = `${proj.year}년 ${proj.month}월 ${daysInMonth}일`;
 
-            const printWindow = window.open("", "_blank");
-            if (!printWindow) {
-                showCustomAlert("팝업 차단이 설정되어 있습니다. 팝업 허용 후 다시 시도해 주세요.");
-                return;
-            }
-
-            printWindow.document.write(`
+            const printHtml = `
                 <!DOCTYPE html>
                 <html lang="ko">
                 <head>
@@ -3240,7 +3296,13 @@
                                 border: none !important;
                                 border-radius: 0 !important;
                                 padding: 0 !important;
-                                font-size: 10.5px !important;
+                                font-size: 12.5px !important;
+                                /* A4 한 페이지를 꽉 채우도록 높이를 페이지 인쇄영역에 맞추고
+                                   내부 블록들을 위아래로 고르게 분산 배치 */
+                                min-height: calc(297mm - 20mm);
+                                display: flex !important;
+                                flex-direction: column;
+                                justify-content: space-between;
                             }
                             @page { size: A4 portrait; margin: 10mm 15mm; }
                         }
@@ -3317,8 +3379,8 @@
                     </div>
                 </body>
                 </html>
-            `);
-            printWindow.document.close();
+            `;
+            printHtmlViaIframe(printHtml);
         }
 
         // 2. 임금 지급 명세서 출력
@@ -3333,13 +3395,7 @@
             }
             const calc = calculateDeductions(labor, autoDays);
 
-            const printWindow = window.open("", "_blank");
-            if (!printWindow) {
-                showCustomAlert("팝업 차단이 설정되어 있습니다. 팝업 허용 후 다시 시도해 주세요.");
-                return;
-            }
-
-            printWindow.document.write(`
+            const printHtml = `
                 <!DOCTYPE html>
                 <html lang="ko">
                 <head>
@@ -3408,7 +3464,13 @@
                                 border: none !important;
                                 border-radius: 0 !important;
                                 padding: 0 !important;
-                                font-size: 10.5px !important;
+                                font-size: 12.5px !important;
+                                /* A4 한 페이지를 꽉 채우도록 높이를 페이지 인쇄영역에 맞추고
+                                   내부 블록들을 위아래로 고르게 분산 배치 */
+                                min-height: calc(297mm - 20mm);
+                                display: flex !important;
+                                flex-direction: column;
+                                justify-content: space-between;
                             }
                             @page { size: A4 portrait; margin: 10mm 15mm; }
                         }
@@ -3490,8 +3552,8 @@
                     </div>
                 </body>
                 </html>
-            `);
-            printWindow.document.close();
+            `;
+            printHtmlViaIframe(printHtml);
         }
 
         // 3. 신규채용자 안전보건 교육일지 출력
@@ -3503,13 +3565,7 @@
             const { firstDay } = getFirstAndLastAttendance(labor);
             const eduDate = `${proj.year}년 ${proj.month}월 ${firstDay}일`;
 
-            const printWindow = window.open("", "_blank");
-            if (!printWindow) {
-                showCustomAlert("팝업 차단이 설정되어 있습니다. 팝업 허용 후 다시 시도해 주세요.");
-                return;
-            }
-
-            printWindow.document.write(`
+            const printHtml = `
                 <!DOCTYPE html>
                 <html lang="ko">
                 <head>
@@ -3578,7 +3634,13 @@
                                 border: none !important;
                                 border-radius: 0 !important;
                                 padding: 0 !important;
-                                font-size: 10.5px !important;
+                                font-size: 12.5px !important;
+                                /* A4 한 페이지를 꽉 채우도록 높이를 페이지 인쇄영역에 맞추고
+                                   내부 블록들을 위아래로 고르게 분산 배치 */
+                                min-height: calc(297mm - 20mm);
+                                display: flex !important;
+                                flex-direction: column;
+                                justify-content: space-between;
                             }
                             @page { size: A4 portrait; margin: 10mm 15mm; }
                         }
@@ -3669,8 +3731,8 @@
                     </div>
                 </body>
                 </html>
-            `);
-            printWindow.document.close();
+            `;
+            printHtmlViaIframe(printHtml);
         }
 
         // 신규 일용직 근로자 추가
@@ -5050,7 +5112,27 @@ ${xlsRows}
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            showToast("전체 데이터의 백업 완료 파일이 작성되었습니다.");
+            showToast("전체 데이터의 백업 완료 파일이 다운로드되었습니다.");
+
+            // 다운로드 직후 구글 드라이브 업로드 페이지로 이동할지 안내
+            setTimeout(() => {
+                showCustomConfirm(
+                    "백업 파일이 '다운로드' 폴더에 저장되었습니다.<br>지금 구글 드라이브를 열어서 그 파일을 업로드(보관)하시겠습니까?<br><span class='text-[11px] text-slate-400'>(드라이브 화면에 다운로드한 파일을 끌어다 놓으면 됩니다)</span>",
+                    () => {
+                        window.open('https://drive.google.com/drive/my-drive', '_blank');
+                    }
+                );
+            }, 600);
+        }
+
+        // 구글 드라이브를 새 탭에서 열어 백업 파일을 내려받을 수 있도록 안내
+        function openGoogleDriveForRestore() {
+            showCustomConfirm(
+                "구글 드라이브를 새 탭에서 엽니다.<br>드라이브에 저장해둔 백업(.json) 파일을 PC로 다운로드한 후,<br>이 화면으로 돌아와 '복구' 버튼으로 그 파일을 선택해 주세요.",
+                () => {
+                    window.open('https://drive.google.com/drive/my-drive', '_blank');
+                }
+            );
         }
 
         function restoreBackup(event) {
@@ -5202,9 +5284,7 @@ ${xlsRows}
         function printInsuranceReport() {
             const proj = appState.projects[appState.currentProjectId];
             const content = document.getElementById('insuranceReportContent').innerHTML;
-            const printWindow = window.open('', '_blank');
-            if (!printWindow) { showCustomAlert("팝업 차단을 해제해주세요."); return; }
-            printWindow.document.write(`
+            const printHtml = `
                 <!DOCTYPE html><html lang="ko"><head>
                 <meta charset="UTF-8">
                 <title>4대보험 취득신고서 - ${proj.company} ${proj.year}년 ${proj.month}월</title>
@@ -5271,8 +5351,8 @@ ${xlsRows}
                 </div>
                 <h2 class="text-lg font-black text-center mb-4 tracking-widest">4대사회보험 취득 신고서</h2>
                 ${content}
-                </body></html>`);
-            printWindow.document.close();
+                </body></html>`;
+            printHtmlViaIframe(printHtml);
         }
 
         // ============================================================
