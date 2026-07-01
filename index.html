@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>일용노무비 지급명세서 및 근로계약서 시스템 (2026)</title>
+    <title>일용노무비 지급명세서 및 근로계약서 시스템 V1.0 (2026)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -124,52 +124,90 @@
     <header class="bg-slate-900 text-white px-5 py-3 flex justify-between items-center shadow-md h-[56px] shrink-0 no-print">
         <div class="flex items-center gap-2 shrink-0">
             <i data-lucide="layout-dashboard" class="text-blue-400 w-5 h-5"></i>
-            <span class="text-sm font-black tracking-tight whitespace-nowrap">일용노무비 & 필수 서류 시스템 (2026)</span>
+            <span class="text-sm font-black tracking-tight whitespace-nowrap">일용노무비 & 필수 서류 시스템</span>
+            <span class="text-[9px] bg-blue-600 text-white font-bold px-1.5 py-0.5 rounded whitespace-nowrap">V1.0</span>
         </div>
         <div id="headerActions" class="flex items-center gap-2 flex-nowrap">
             <button id="toggleAllWeeksBtn" onclick="toggleAllWeeks()" class="bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="출근일자(1일~말일) 전체를 한 번에 접거나 펼칩니다">
                 <i data-lucide="fold-vertical" class="w-3.5 h-3.5"></i> 일자 전체접기
             </button>
-            <button onclick="openInsuranceReportModal()" class="bg-teal-600 hover:bg-teal-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="8일 이상 근무자 4대보험 취득신고서 출력">
-                <i data-lucide="file-text" class="w-3.5 h-3.5"></i> 보험신고
+            <button onclick="runPreSubmitCheck()" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="제출/인쇄 전 필수정보 누락 및 오류를 한 번에 점검">
+                <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> 제출 전 점검
             </button>
-            <button onclick="openCarryOverModal()" class="bg-violet-600 hover:bg-violet-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="현재 근로자를 다음달 대장으로 이월">
-                <i data-lucide="calendar-arrow-right" class="w-3.5 h-3.5"></i> 이월
-            </button>
-            <button onclick="openMoveLaborModal()" class="bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="선택한 근로자를 같은 달 다른 대장(현장)으로 이동">
-                <i data-lucide="move" class="w-3.5 h-3.5"></i> 인원이동
-            </button>
-            <button onclick="openWorkerDbModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="모든 대장에 등록된 근로자 인적사항을 모아본 공통 DB(주소록)">
-                <i data-lucide="users" class="w-3.5 h-3.5"></i> 근로자DB
-            </button>
-            <button onclick="copyToClipboardForExcel()" class="bg-slate-700 hover:bg-slate-800 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="엑셀에 바로 붙여넣기 가능한 규격으로 복사합니다.">
-                <i data-lucide="clipboard-copy" class="w-3.5 h-3.5"></i> 엑셀용 복사
-            </button>
-            <button onclick="openBulkPrintModal()" class="bg-cyan-600 hover:bg-cyan-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="선택한 근로자 전원의 표준일용근로계약서를 한 번에 인쇄">
-                <i data-lucide="files" class="w-3.5 h-3.5"></i> 계약서 일괄인쇄
-            </button>
-            <button onclick="exportToCSV()" class="bg-teal-600 hover:bg-teal-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all">
-                <i data-lucide="file-down" class="w-3.5 h-3.5"></i> CSV
-            </button>
-            <button onclick="exportToXLS()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all">
-                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> XLS 저장
-            </button>
-            <button onclick="triggerBackup()" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="백업 파일 다운로드 후 구글 드라이브 업로드 안내">
-                <i data-lucide="database-backup" class="w-3.5 h-3.5"></i> 백업
-            </button>
-            <button onclick="openAutoBackupModal()" class="bg-orange-600 hover:bg-orange-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="자동으로 저장된 최근 백업 이력에서 복구">
-                <i data-lucide="history" class="w-3.5 h-3.5"></i> 자동백업 이력
-            </button>
-            <label class="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 cursor-pointer transition-all font-sans">
-                <i data-lucide="folder-open" class="w-3.5 h-3.5"></i> 복구
-                <input type="file" id="backupFile" accept=".json" onchange="restoreBackup(event)" class="hidden">
-            </label>
-            <button onclick="openGoogleDriveForRestore()" class="bg-sky-600 hover:bg-sky-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all" title="구글 드라이브에서 백업 파일을 다운로드한 뒤 복구 버튼으로 불러오세요">
-                <i data-lucide="cloud" class="w-3.5 h-3.5"></i> 드라이브에서
-            </button>
-            <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-800 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all">
-                <i data-lucide="printer" class="w-3.5 h-3.5"></i> 대장인쇄
-            </button>
+
+            <div class="w-px h-5 bg-white/20 mx-0.5"></div>
+
+            <!-- 인원 관리 드롭다운: 이월 / 인원이동 / 근로자DB -->
+            <div class="header-dropdown relative">
+                <button onclick="toggleHeaderMenu('menuPeople', this)" class="bg-violet-600 hover:bg-violet-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all">
+                    <i data-lucide="users" class="w-3.5 h-3.5"></i> 인원 관리 <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                </button>
+                <div id="menuPeople" class="hidden absolute left-0 mt-1 bg-white rounded-lg shadow-xl border border-slate-200 w-44 py-1 z-50 text-slate-700">
+                    <button onclick="closeHeaderMenus(); openCarryOverModal()" class="w-full text-left px-3 py-2 text-xs font-bold hover:bg-violet-50 flex items-center gap-2" title="현재 근로자를 다음달 대장으로 이월">
+                        <i data-lucide="calendar-arrow-right" class="w-3.5 h-3.5 text-violet-500"></i> 다음달로 이월
+                    </button>
+                    <button onclick="closeHeaderMenus(); openMoveLaborModal()" class="w-full text-left px-3 py-2 text-xs font-bold hover:bg-fuchsia-50 flex items-center gap-2" title="선택한 근로자를 같은 달 다른 대장(현장)으로 이동">
+                        <i data-lucide="move" class="w-3.5 h-3.5 text-fuchsia-500"></i> 타현장 인원이동
+                    </button>
+                    <button onclick="closeHeaderMenus(); openWorkerDbModal()" class="w-full text-left px-3 py-2 text-xs font-bold hover:bg-indigo-50 flex items-center gap-2" title="모든 대장에 등록된 근로자 인적사항을 모아본 공통 DB(주소록)">
+                        <i data-lucide="book-user" class="w-3.5 h-3.5 text-indigo-500"></i> 근로자DB(주소록)
+                    </button>
+                </div>
+            </div>
+
+            <!-- 출력/내보내기 드롭다운: 보험신고 / 계약서 일괄인쇄 / 엑셀용 복사 / CSV / XLS / 대장인쇄 -->
+            <div class="header-dropdown relative">
+                <button onclick="toggleHeaderMenu('menuExport', this)" class="bg-teal-600 hover:bg-teal-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all">
+                    <i data-lucide="printer" class="w-3.5 h-3.5"></i> 출력·내보내기 <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                </button>
+                <div id="menuExport" class="hidden absolute left-0 mt-1 bg-white rounded-lg shadow-xl border border-slate-200 w-52 py-1 z-50 text-slate-700">
+                    <button onclick="closeHeaderMenus(); window.print()" class="w-full text-left px-3 py-2 text-xs font-bold hover:bg-slate-50 flex items-center gap-2">
+                        <i data-lucide="printer" class="w-3.5 h-3.5 text-slate-500"></i> 대장 인쇄
+                    </button>
+                    <button onclick="closeHeaderMenus(); openBulkPrintModal()" class="w-full text-left px-3 py-2 text-xs font-bold hover:bg-cyan-50 flex items-center gap-2" title="선택한 근로자 전원의 표준일용근로계약서를 한 번에 인쇄">
+                        <i data-lucide="files" class="w-3.5 h-3.5 text-cyan-600"></i> 계약서 일괄인쇄
+                    </button>
+                    <button onclick="closeHeaderMenus(); openInsuranceReportModal()" class="w-full text-left px-3 py-2 text-xs font-bold hover:bg-teal-50 flex items-center gap-2" title="8일 이상 근무자 4대보험 취득신고서 출력">
+                        <i data-lucide="file-text" class="w-3.5 h-3.5 text-teal-600"></i> 4대보험 취득신고서
+                    </button>
+                    <div class="h-px bg-slate-100 my-1"></div>
+                    <button onclick="closeHeaderMenus(); copyToClipboardForExcel()" class="w-full text-left px-3 py-2 text-xs font-bold hover:bg-slate-50 flex items-center gap-2" title="엑셀에 바로 붙여넣기 가능한 규격으로 복사합니다.">
+                        <i data-lucide="clipboard-copy" class="w-3.5 h-3.5 text-slate-500"></i> 엑셀용 복사
+                    </button>
+                    <button onclick="closeHeaderMenus(); exportToCSV()" class="w-full text-left px-3 py-2 text-xs font-bold hover:bg-teal-50 flex items-center gap-2">
+                        <i data-lucide="file-down" class="w-3.5 h-3.5 text-teal-600"></i> CSV 내보내기
+                    </button>
+                    <button onclick="closeHeaderMenus(); exportToXLS()" class="w-full text-left px-3 py-2 text-xs font-bold hover:bg-emerald-50 flex items-center gap-2">
+                        <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i> XLS 저장
+                    </button>
+                </div>
+            </div>
+
+            <!-- 데이터 관리 드롭다운: 백업 / 자동백업 이력 / 복구 / 드라이브에서 -->
+            <div class="header-dropdown relative">
+                <button onclick="toggleHeaderMenu('menuData', this)" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 rounded font-bold flex items-center gap-1 transition-all">
+                    <i data-lucide="database-backup" class="w-3.5 h-3.5"></i> 데이터 관리 <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                </button>
+                <div id="menuData" class="hidden absolute right-0 mt-1 bg-white rounded-lg shadow-xl border border-slate-200 w-52 py-1 z-50 text-slate-700">
+                    <button onclick="closeHeaderMenus(); fetchWeatherForProject()" class="w-full text-left px-3 py-2 text-xs font-bold hover:bg-cyan-50 flex items-center gap-2" title="현장 지역 기준으로 이번 달 강수일을 자동 조회하여 출근일자에 표시합니다">
+                        <i data-lucide="cloud-rain" class="w-3.5 h-3.5 text-cyan-600"></i> 우천일 자동표시(날씨조회)
+                    </button>
+                    <div class="h-px bg-slate-100 my-1"></div>
+                    <button onclick="closeHeaderMenus(); triggerBackup()" class="w-full text-left px-3 py-2 text-xs font-bold hover:bg-blue-50 flex items-center gap-2" title="백업 파일 다운로드 후 구글 드라이브 업로드 안내">
+                        <i data-lucide="database-backup" class="w-3.5 h-3.5 text-blue-600"></i> 백업 파일 다운로드
+                    </button>
+                    <button onclick="closeHeaderMenus(); openAutoBackupModal()" class="w-full text-left px-3 py-2 text-xs font-bold hover:bg-orange-50 flex items-center gap-2" title="자동으로 저장된 최근 백업 이력에서 복구">
+                        <i data-lucide="history" class="w-3.5 h-3.5 text-orange-500"></i> 자동백업 이력
+                    </button>
+                    <label class="w-full text-left px-3 py-2 text-xs font-bold hover:bg-indigo-50 flex items-center gap-2 cursor-pointer">
+                        <i data-lucide="folder-open" class="w-3.5 h-3.5 text-indigo-500"></i> 백업파일로 복구
+                        <input type="file" id="backupFile" accept=".json" onchange="closeHeaderMenus(); restoreBackup(event)" class="hidden">
+                    </label>
+                    <button onclick="closeHeaderMenus(); openGoogleDriveForRestore()" class="w-full text-left px-3 py-2 text-xs font-bold hover:bg-sky-50 flex items-center gap-2" title="구글 드라이브에서 백업 파일을 다운로드한 뒤 복구 버튼으로 불러오세요">
+                        <i data-lucide="cloud" class="w-3.5 h-3.5 text-sky-500"></i> 구글드라이브에서
+                    </button>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -771,6 +809,10 @@
                     <label class="block font-bold text-slate-500 mb-1">구체적 공종명</label>
                     <input type="text" id="editModalWorkType" class="w-full bg-slate-50 border border-slate-200 rounded p-2.5 focus:ring-1 focus:ring-amber-500 outline-none">
                 </div>
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1">현장 주소/지역 <span class="text-[10px] font-normal text-slate-400">(우천 자동표시용, 선택)</span></label>
+                    <input type="text" id="editModalWeatherLocation" placeholder="예: 강원도 원주시 지정면" class="w-full bg-slate-50 border border-slate-200 rounded p-2.5 focus:ring-1 focus:ring-amber-500 outline-none">
+                </div>
             </div>
             <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2 text-xs">
                 <button onclick="closeEditProjectModal()" class="px-4 py-2 font-medium text-slate-500 hover:text-slate-800">취소</button>
@@ -915,6 +957,25 @@
             </div>
             <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
                 <button onclick="closeAutoBackupModal()" class="px-4 py-2 font-medium text-slate-500 hover:text-slate-800 text-xs">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 제출 전 점검 결과 모달 (no-print) -->
+    <div id="preSubmitCheckModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center z-50 no-print">
+        <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="bg-slate-900 text-white p-4 flex justify-between items-center shrink-0">
+                <h3 class="font-bold flex items-center gap-1.5 text-xs uppercase tracking-wider">
+                    <i data-lucide="shield-alert" class="w-4 h-4 text-rose-400"></i> 제출 전 점검 결과
+                </h3>
+                <button onclick="closePreSubmitCheckModal()" class="text-slate-400 hover:text-white transition-all">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div id="preSubmitCheckSummary" class="px-4 py-3 border-b border-slate-100 text-xs shrink-0"></div>
+            <div id="preSubmitCheckList" class="overflow-y-auto divide-y divide-slate-100 text-xs flex-1"></div>
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
+                <button onclick="closePreSubmitCheckModal()" class="px-4 py-2 font-medium text-slate-500 hover:text-slate-800 text-xs">닫기</button>
             </div>
         </div>
     </div>
@@ -1760,6 +1821,30 @@
         }
         // ─────────────────────────────────────────────────────────────────
 
+        // ── 상단 툴바 메뉴 최적화: 버튼을 드롭다운으로 그룹화 ──────────────
+        function toggleHeaderMenu(menuId, btnEl) {
+            const menu = document.getElementById(menuId);
+            if (!menu) return;
+            const wasHidden = menu.classList.contains('hidden');
+            closeHeaderMenus();
+            if (wasHidden) {
+                menu.classList.remove('hidden');
+                if (window.lucide) lucide.createIcons();
+            }
+        }
+
+        function closeHeaderMenus() {
+            document.querySelectorAll('.header-dropdown > div[id^="menu"]').forEach(m => m.classList.add('hidden'));
+        }
+
+        // 메뉴 바깥 클릭 시 자동으로 닫힘
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.header-dropdown')) {
+                closeHeaderMenus();
+            }
+        });
+        // ─────────────────────────────────────────────────────────────────
+
         // ── 좌측 메뉴 접기/펼치기 ────────────────────────────────────────
         const SIDEBAR_COLLAPSE_KEY = 'labor_payment_sidebar_collapsed_v1';
 
@@ -2262,10 +2347,17 @@
                     } else {
                         const dayName = weekDays[new Date(proj.year, proj.month - 1, d).getDay()];
                         const colorClass = getDayOfWeekColorClass(proj.year, proj.month, d);
+                        const holidayName = getHolidayName(proj.year, proj.month, d);
+                        const rainAmount = getRainAmount(proj, d);
+                        const holidayMark = holidayName ? `<span class="text-[7px] leading-none">🎌</span>` : '';
+                        const rainMark = (rainAmount !== null) ? `<span class="text-[7px] leading-none" title="강수량 약 ${rainAmount}mm">☔</span>` : '';
+                        const markRow = (holidayMark || rainMark) ? `<div class="flex items-center justify-center gap-0.5 leading-none">${holidayMark}${rainMark}</div>` : '';
+                        const tooltipParts = [holidayName, rainAmount !== null ? `강수량 약 ${rainAmount}mm` : null].filter(Boolean);
                         html += `
-                            <th class="w-6 border-r border-slate-200 p-0.5 print:border-black ${colorClass}">
+                            <th class="w-6 border-r border-slate-200 p-0.5 print:border-black ${colorClass}" ${tooltipParts.length ? `title="${tooltipParts.join(' / ')}"` : ''}>
                                 <div class="text-[8px] opacity-75">${dayName}</div>
                                 <div>${d}</div>
+                                ${markRow}
                             </th>
                         `;
                     }
@@ -2274,16 +2366,118 @@
             return html;
         }
 
+        // ===== 2026년 대한민국 법정 공휴일 (관공서의 공휴일에 관한 규정 기준) =====
+        // key: "MM-DD" (연도는 2026 고정. 추후 연도 대응 시 별도 데이터 추가 필요)
+        const KR_HOLIDAYS_2026 = {
+            "01-01": "신정",
+            "02-16": "설날연휴",
+            "02-17": "설날",
+            "02-18": "설날연휴",
+            "03-01": "삼일절",
+            "03-02": "대체공휴일(삼일절)",
+            "05-01": "근로자의날",
+            "05-05": "어린이날",
+            "05-24": "부처님오신날",
+            "05-25": "대체공휴일(부처님오신날)",
+            "06-03": "전국동시지방선거",
+            "06-06": "현충일",
+            "07-17": "제헌절",
+            "08-15": "광복절",
+            "08-17": "대체공휴일(광복절)",
+            "09-24": "추석연휴",
+            "09-25": "추석",
+            "09-26": "추석연휴",
+            "10-03": "개천절",
+            "10-05": "대체공휴일(개천절)",
+            "10-09": "한글날",
+            "12-25": "크리스마스"
+        };
+
+        // 해당 날짜가 공휴일이면 명칭을, 아니면 null을 반환
+        function getHolidayName(year, month, day) {
+            if (year !== 2026) return null; // 2026년 데이터만 보유
+            const key = `${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            return KR_HOLIDAYS_2026[key] || null;
+        }
+
+        // ── 우천 자동표시: Nominatim 지오코딩 + Open-Meteo 강수량 조회 ──────
+        async function fetchWeatherForProject() {
+            const proj = appState.projects[appState.currentProjectId];
+            if (!proj) return;
+
+            const query = (proj.weatherLocation && proj.weatherLocation.trim())
+                || `${proj.projectName || ''} ${proj.company || ''}`.trim();
+            if (!query) {
+                showCustomAlert('현장 주소/지역 정보가 없습니다. "현장 수정"에서 지역을 입력한 뒤 다시 시도해 주세요.');
+                return;
+            }
+
+            showToast('날씨 정보를 조회하는 중입니다...');
+            try {
+                const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=kr`);
+                const geoData = await geoRes.json();
+                if (!geoData || geoData.length === 0) {
+                    showCustomAlert(`"${query}" 위치를 찾을 수 없습니다. "현장 수정"에서 더 구체적인 주소(시/군/구 단위)를 입력해 주세요.`);
+                    return;
+                }
+                const lat = geoData[0].lat;
+                const lon = geoData[0].lon;
+
+                const daysInMonth = new Date(proj.year, proj.month, 0).getDate();
+                const startDate = `${proj.year}-${String(proj.month).padStart(2, '0')}-01`;
+                const endDate = `${proj.year}-${String(proj.month).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+
+                const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&start_date=${startDate}&end_date=${endDate}&daily=precipitation_sum&timezone=Asia%2FSeoul`);
+                const wData = await wRes.json();
+                if (!wData || !wData.daily || !wData.daily.time) {
+                    showCustomAlert('날씨 데이터를 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+                    return;
+                }
+
+                const rainDays = {};
+                wData.daily.time.forEach((dateStr, idx) => {
+                    const day = parseInt(dateStr.split('-')[2], 10);
+                    const precip = wData.daily.precipitation_sum[idx];
+                    if (precip !== null && precip !== undefined && precip >= 1) rainDays[day] = precip; // 1mm 이상 강수를 우천으로 표시
+                });
+
+                proj.weatherCache = { location: query, fetchedAt: Date.now(), year: proj.year, month: proj.month, rainDays };
+                saveToLocalStorage();
+                updateHeaderAndTable();
+
+                const rainCount = Object.keys(rainDays).length;
+                showToast(rainCount > 0
+                    ? `날씨 정보를 불러왔습니다 (${query} 기준) — 이번 달 강수일 ${rainCount}일 자동표시됨`
+                    : `날씨 정보를 불러왔습니다 (${query} 기준) — 이번 달 강수 기록 없음`);
+            } catch (e) {
+                showCustomAlert('날씨 정보를 가져오는 중 오류가 발생했습니다. 인터넷 연결 상태를 확인 후 다시 시도해 주세요.');
+            }
+        }
+
+        // 해당 날짜의 캐시된 강수량(mm)을 반환, 없으면 null
+        function getRainAmount(proj, day) {
+            const cache = proj.weatherCache;
+            if (!cache || cache.year !== proj.year || cache.month !== proj.month) return null;
+            return cache.rainDays && cache.rainDays[day] !== undefined ? cache.rainDays[day] : null;
+        }
+        // ─────────────────────────────────────────────────────────────────
+
         // 오늘 날짜 및 주말 요일 색상 판정
         function getDayOfWeekColorClass(year, month, day) {
             const date = new Date(year, month - 1, day);
             const dayOfWeek = date.getDay();
             const today = new Date();
             const isToday = today.getFullYear() === year && (today.getMonth() + 1) === month && today.getDate() === day;
+            const holidayName = getHolidayName(year, month, day);
 
             let classes = "";
             if (isToday) {
                 classes += "bg-amber-100 ring-2 ring-amber-400 ring-inset font-bold ";
+            }
+
+            // 공휴일: 요일과 무관하게 일요일과 동일 계열(빨강)로 강조 + 진한 배경으로 주말과 구분
+            if (holidayName) {
+                return classes + "text-red-600 font-extrabold bg-red-100 print:text-red-600 print:bg-red-50";
             }
 
             if (dayOfWeek === 6) {
@@ -2479,12 +2673,19 @@
                 const employBadge = isEmploymentExempt ? `<span class="block text-[11px] text-white bg-orange-500 font-bold rounded px-1 mt-0.5 leading-tight">고용면제</span>` : '';
                 const incomeTaxBadge = (calc.incomeTax === 0 && labor.price > taxRates.taxFreeAmount) ? `<span class="block text-[10px] text-white bg-blue-400 font-bold rounded px-1 mt-0.5 leading-tight">소액부징수</span>` : '';
 
+                // 오류방지: 수동으로 일수를 덮어썼는데 실제 출역 체크 합계와 다르면 경고
+                const daysMismatch = hasManualDays && Number(labor.manualDays) !== autoDays;
+                const daysMismatchBadge = daysMismatch
+                    ? `<span class="block text-[8px] bg-rose-600 text-white font-bold px-1 rounded mt-0.5 whitespace-nowrap" title="수동입력 ${labor.manualDays}일 ≠ 실제 출역체크 ${autoDays}일">⚠ 출역불일치</span>`
+                    : '';
+
                 html += `
                     <td class="p-0 border-r border-slate-200 bg-amber-50/50 print:border-black print:bg-white whitespace-nowrap">
                         <input type="number" step="0.1" value="${calc.effectiveDays}" 
                             onchange="updateLaborDays('${labor.id}', this.value)" 
                             class="w-12 text-center font-extrabold bg-transparent border border-transparent hover:border-slate-300 rounded px-0.5 py-0.5 focus:ring-1 focus:ring-amber-500 ${hasManualDays ? 'text-amber-700 ring-1 ring-amber-400 bg-amber-100/50' : ''}"
                         >
+                        ${daysMismatchBadge}
                     </td>
                     <td class="p-0 border-r border-slate-200 print:border-black whitespace-nowrap">
                         <input type="text" value="${commaFormatter(labor.price)}" 
@@ -2645,8 +2846,9 @@
         function _detailNameAutofill(name) {
             const badge = document.getElementById('detailDbMatchBadge');
             window._detailDbCandidate = null;
-            if (!name.trim() || !appState.workerDb) { badge.classList.add('hidden'); return; }
-            const match = appState.workerDb.find(w => w.name === name.trim());
+            if (!name.trim()) { badge.classList.add('hidden'); return; }
+            const db = _buildWorkerDb();
+            const match = db.find(w => w.name === name.trim());
             if (match) {
                 window._detailDbCandidate = match;
                 badge.classList.remove('hidden');
@@ -3900,6 +4102,162 @@
             _updateBulkPrintCount();
         }
 
+        // ── 오류방지: 제출/인쇄 전 필수정보 누락·불일치 일괄 점검 ──────────
+        function runPreSubmitCheck() {
+            const proj = appState.projects[appState.currentProjectId];
+            if (!proj || proj.labors.length === 0) {
+                showCustomAlert("등록된 근로자가 없습니다.");
+                return;
+            }
+
+            const daysInMonth = new Date(proj.year, proj.month, 0).getDate();
+            const ssnMap = {}; // 정제된 주민번호 -> [근로자명...]
+            proj.labors.forEach(l => {
+                const clean = (l.ssn || '').replace(/[^0-9]/g, '');
+                if (clean.length === 13) {
+                    if (!ssnMap[clean]) ssnMap[clean] = [];
+                    ssnMap[clean].push(l.name);
+                }
+            });
+
+            // 겸직(동일인 타현장 동시 출역) 점검용 — 전체 프로젝트에서 같은 SSN의 동일 연/월 출역일자 수집
+            const crossProjectAttendance = _buildCrossProjectAttendanceMap(proj);
+            const workerDb = _buildWorkerDb();
+
+            const issues = []; // { laborId, name, problems: [문자열...] }
+
+            proj.labors.forEach(labor => {
+                const problems = [];
+                const cleanSsn = (labor.ssn || '').replace(/[^0-9]/g, '');
+
+                if (!labor.name || !labor.name.trim()) {
+                    problems.push('성명 미기재');
+                }
+                if (cleanSsn.length !== 13) {
+                    problems.push('주민등록번호 13자리 미기재/오류');
+                } else if (ssnMap[cleanSsn] && ssnMap[cleanSsn].length > 1) {
+                    problems.push(`주민번호 중복 (${ssnMap[cleanSsn].filter(n => n !== labor.name).join(', ') || '동일 인원 내 중복'})`);
+                }
+                if (!labor.phone || !labor.phone.trim()) {
+                    problems.push('연락처 미기재');
+                }
+                if (!labor.bank || !labor.bank.trim() || !labor.account || !labor.account.trim()) {
+                    problems.push('계좌정보(은행/계좌번호) 미기재');
+                }
+
+                // 수동 일수 입력값과 실제 출역 체크 합계 불일치
+                let autoDays = 0;
+                for (let d = 1; d <= daysInMonth; d++) {
+                    if (labor.attendance[d]) autoDays += Number(labor.attendance[d]);
+                }
+                const hasManualDays = (labor.manualDays !== null && labor.manualDays !== undefined);
+                if (hasManualDays && Number(labor.manualDays) !== autoDays) {
+                    problems.push(`출역일수 불일치 (수동입력 ${labor.manualDays}일 ≠ 실제체크 ${autoDays}일)`);
+                }
+                if (!hasManualDays && autoDays === 0) {
+                    problems.push('출역일자가 한 건도 체크되지 않음');
+                }
+
+                // 겸직: 같은 사람(주민번호 일치)이 같은 날짜에 다른 현장에서도 출역 체크됨
+                if (cleanSsn.length === 13 && crossProjectAttendance[cleanSsn]) {
+                    const conflictDays = [];
+                    for (let d = 1; d <= daysInMonth; d++) {
+                        if (labor.attendance[d] && crossProjectAttendance[cleanSsn][d] && crossProjectAttendance[cleanSsn][d].length > 0) {
+                            conflictDays.push(`${d}일(${crossProjectAttendance[cleanSsn][d].join(', ')})`);
+                        }
+                    }
+                    if (conflictDays.length > 0) {
+                        problems.push(`겸직 의심: 동일인이 같은 날짜에 타 현장 출역 기록 있음 — ${conflictDays.slice(0, 5).join(', ')}${conflictDays.length > 5 ? ' 외' : ''}`);
+                    }
+                }
+
+                // 단가 급변동: 근로자DB(타 현장/타 월) 기록 단가 대비 15% 이상 차이
+                if (cleanSsn.length === 13 && labor.price) {
+                    const dbMatch = workerDb.find(w => w.ssn === labor.ssn && w.count > 1);
+                    if (dbMatch && dbMatch.price && Math.abs(labor.price - dbMatch.price) / dbMatch.price > 0.15) {
+                        problems.push(`단가 급변동 의심: 기존 ${Number(dbMatch.price).toLocaleString()}원 → 현재 ${Number(labor.price).toLocaleString()}원`);
+                    }
+                }
+
+                // 단가 이상치(오타 의심): 통상적인 일용 단가 범위를 크게 벗어남
+                if (labor.price && (labor.price < 50000 || labor.price > 600000)) {
+                    problems.push(`단가 이상치 확인 필요: ${Number(labor.price).toLocaleString()}원 (오타 의심)`);
+                }
+
+                // 외국인 체류/안전교육 만료
+                if (labor.visaType && labor.visaExpiry) {
+                    const diff = Math.ceil((new Date(labor.visaExpiry) - new Date()) / 86400000);
+                    if (diff < 0) problems.push('외국인 체류기간 만료');
+                }
+                if (labor.safetyEdu && labor.safetyExpiry) {
+                    const diff2 = Math.ceil((new Date(labor.safetyExpiry) - new Date()) / 86400000);
+                    if (diff2 < 0) problems.push('안전교육 유효기간 만료');
+                }
+
+                if (problems.length > 0) {
+                    issues.push({ laborId: labor.id, name: labor.name || '(이름없음)', problems });
+                }
+            });
+
+            _renderPreSubmitCheckResult(issues, proj.labors.length);
+        }
+
+        // 겸직 점검용: 현재 프로젝트와 같은 연/월인 다른 현장들에서, SSN별로 어느 날짜에 출역했는지 맵 구성
+        // 반환 형태: { ssn: { day: [현장명, ...] } }
+        function _buildCrossProjectAttendanceMap(currentProj) {
+            const map = {};
+            Object.values(appState.projects).forEach(p => {
+                if (p === currentProj) return;
+                if (p.year !== currentProj.year || p.month !== currentProj.month) return; // 동일 연/월만 비교
+                const siteLabel = p.projectName || p.company || '타현장';
+                (p.labors || []).forEach(l => {
+                    const clean = (l.ssn || '').replace(/[^0-9]/g, '');
+                    if (clean.length !== 13) return;
+                    if (!map[clean]) map[clean] = {};
+                    for (let d = 1; d <= 31; d++) {
+                        if (l.attendance[d]) {
+                            if (!map[clean][d]) map[clean][d] = [];
+                            if (!map[clean][d].includes(siteLabel)) map[clean][d].push(siteLabel);
+                        }
+                    }
+                });
+            });
+            return map;
+        }
+
+        function _renderPreSubmitCheckResult(issues, totalCount) {
+            const summary = document.getElementById('preSubmitCheckSummary');
+            const list = document.getElementById('preSubmitCheckList');
+
+            if (issues.length === 0) {
+                summary.innerHTML = `<span class="text-emerald-600 font-bold flex items-center gap-1"><i data-lucide="check-circle-2" class="w-4 h-4"></i> 전체 ${totalCount}명 점검 완료 — 발견된 문제가 없습니다.</span>`;
+                list.innerHTML = `<div class="p-8 text-center text-slate-400">✅ 제출/인쇄해도 좋습니다.</div>`;
+            } else {
+                summary.innerHTML = `<span class="text-rose-600 font-bold">전체 ${totalCount}명 중 <span class="text-sm">${issues.length}명</span>에게서 문제가 발견되었습니다.</span> 항목을 클릭하면 해당 근로자의 상세정보를 바로 수정할 수 있습니다.`;
+                list.innerHTML = issues.map(item => `
+                    <div class="flex items-start justify-between gap-2 px-4 py-2.5 hover:bg-rose-50 cursor-pointer transition-colors" onclick="closePreSubmitCheckModal(); openDetailModal('${item.laborId}')">
+                        <div>
+                            <span class="font-bold text-slate-800">${item.name}</span>
+                            <ul class="mt-1 space-y-0.5">
+                                ${item.problems.map(p => `<li class="text-rose-600 text-[11px]">• ${p}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <span class="text-slate-300 shrink-0">
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </span>
+                    </div>
+                `).join('');
+            }
+
+            document.getElementById('preSubmitCheckModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closePreSubmitCheckModal() {
+            document.getElementById('preSubmitCheckModal').classList.add('hidden');
+        }
+        // ─────────────────────────────────────────────────────────────────
+
 
         // 2. 임금 지급 명세서 출력
         function printReceiptInNewTab(laborId) {
@@ -4939,6 +5297,7 @@
             document.getElementById('editModalMonth').value = proj.month || 1;
             document.getElementById('editModalProjectName').value = proj.projectName || "";
             document.getElementById('editModalWorkType').value = proj.workType || "";
+            document.getElementById('editModalWeatherLocation').value = proj.weatherLocation || "";
             document.getElementById('editProjectModal').classList.remove('hidden');
         }
 
@@ -4956,18 +5315,22 @@
             const month = parseInt(document.getElementById('editModalMonth').value);
             const projectName = document.getElementById('editModalProjectName').value.trim();
             const workType = document.getElementById('editModalWorkType').value.trim();
+            const weatherLocation = document.getElementById('editModalWeatherLocation').value.trim();
 
             if (!company || isNaN(year) || isNaN(month) || !projectName || !workType) {
                 showCustomAlert("비어 있는 입력 항목이 있는지 상세 확인 후 기록하여 주십시오.");
                 return;
             }
 
+            const weatherLocationChanged = weatherLocation !== (proj.weatherLocation || "");
             proj.company = company;
             proj.representative = representative || proj.representative;
             proj.year = year;
             proj.month = month;
             proj.projectName = projectName;
             proj.workType = workType;
+            proj.weatherLocation = weatherLocation;
+            if (weatherLocationChanged) proj.weatherCache = null; // 지역이 바뀌면 캐시된 날씨 무효화
 
             saveToLocalStorage();
             populateDropdowns();
